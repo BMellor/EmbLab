@@ -5,6 +5,5 @@
 *.bcf
 *.aux
 *.synctex.gz(busy)
-*.pdf
 *.bbl
 *.blg

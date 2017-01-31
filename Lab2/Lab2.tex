@@ -446,7 +446,10 @@ In this exercise you will be enabling an external interrupt on the rising-edge o
  
 \begin{enumerate}
     \item Configure the button pin (PA0) to input-mode, low-speed and with the internal pull-down resistor enabled. 
-    \item Use the RCC to enable the peripheral clock to the EXTI and SYSCFG peripherals.
+    \item Use the RCC to enable the peripheral clock to the SYSCFG peripheral.
+    \begin{itemize}
+        \item Because of the low-level wakeup functions it can provide, the EXTI peripheral always is connected to the peripheral clock.
+    \end{itemize}
     \item Determine and configure the SYSCFG multiplexer routing PA0 to the EXTI peripheral.
     \begin{itemize}
         \item See section \ref{syscfg} in the lab manual.

@@ -399,7 +399,7 @@ The SysTick peripheral is a simple countdown timer which begins at a software se
     \item Your modified SysTick handler will be called every millisecond. Because of this periodicity, you can count the number of iterations as a timing basis.  
     \begin{itemize}
         \item For example, toggling an LED every 200th time the handler is called results in 200 ms between blinks. 
-        \item You will need to use either a global variable or local-static variable to store interrupt count. 
+        \item You will need to use either a volatile global variable or local-static variable to store interrupt count. 
         \item \textbf{Do not use delay functions in the interrupt handler.}
     \end{itemize}
     \item Remove any existing code within the infinite loop of the main function. 
@@ -443,9 +443,7 @@ Even though the HAL library has already configured the SysTick and enabled the i
 Writing a simple application based around the SysTick interrupt introduced the concepts of basic interrupt-driven programming. However, modifying the existing interrupt handler of a peripheral which requires minimal configuration doesn't give an accurate representation of the full process.  
 
 In this exercise you will be enabling an external interrupt on the rising-edge of the user button (PA0) pin. 
-
-\subsubsection{Configuring the EXTI}
-External interrupts are managed by the EXTI peripheral, in order to configure an interrupt on the button pin (PA0) there are a number of steps which need to be completed. 
+ 
 \begin{enumerate}
     \item Configure the button pin (PA0) to input-mode, low-speed and with the internal pull-down resistor enabled. 
     \item Use the RCC to enable the peripheral clock to the EXTI and SYSCFG peripherals.
@@ -461,7 +459,7 @@ External interrupts are managed by the EXTI peripheral, in order to configure an
     \item Enable the external interrupt within the EXTI peripheral.
     \begin{itemize}
         \item See sections \ref{exti} and \ref{periph_setup} in the lab manual.
-        \item  You will need to enable/unmask the specific input line and set an edge trigger condition (your choice)
+        \item  You will need to enable/unmask the specific input line and set a rising-edge trigger.
         \begin{itemize}
             \item Remember that the first 16 inputs to the EXTI are used for external interrupts. For example, \textit{EXTI3} is the 3rd input line. 
         \end{itemize}
@@ -494,16 +492,45 @@ External interrupts are managed by the EXTI peripheral, in order to configure an
 
 One of the biggest difficulties with interrupts is the number of steps that need to be completed correctly before getting any positive result. 
 
-Assuming that you set a single-edge trigger in the EXTI, you should expect to see your handler called once per button press. However, there is a good chance that you see multiple rapid transitions instead. If this occurs when pressing or releasing the button, don't worry because it's not your code.
+Assuming that you set a rising-edge trigger in the EXTI, you should expect to see your handler called once per button press. However, there is a good chance that you see multiple rapid transitions instead. If this occurs when pressing or releasing the button, don't worry because it's not your code.
 
-These rapid multiple triggers of the external interrupt are caused by button bounce. (see section 2.5.5 in the previous lab) The EXTI sees multiple transitions during the bouncing period and repeats the interrupt multiple times. Unfortunately, it's hard to debounce interrupts in software. Typically all interrupt lines connected to mechanical switches or buttons need hardware debouncing filters. For this lab, just ignore the bounce.
+These rapid multiple triggers of the external interrupt are caused by button bounce. (see section 2.5.5 in the previous lab) The EXTI sees multiple transitions during the bouncing period and repeats the interrupt multiple times. Unfortunately, it's hard to debounce interrupts in software. Typically all interrupt lines connected to mechanical switches or buttons need hardware debouncing filters.
+
+ For this lab, just ignore the bounce.
 
 % Set up EXTI interrupt
-\subsubsection{Measuring Interrupt Latency}
+\subsection{Measuring Interrupt Latency}
 % Use logic analyzer to measure latency of external interrupt
 
 \subsection{Exploring Interrupt Priority}
 % Change priorities of two interrupts
+Normally you want to keep interrupt handlers as short as possible. However, there are some cases where this simply isn't feasible. In situations where a long-running interrupt is possibly you must pay special attention to the priorities of others in the system. 
 
+This exercise demonstrates how a long running interrupt can prevent another from executing properly. By setting appropriate priorities in the NVIC the two interrupts can be adjusted such that they coexist without interfering with each other's operation. 
+
+To do this we are going to use both the SysTick and EXTI interrupts. Before you begin you should have both interrupts configured and enabled in your main application. 
+
+In each of the interrupt handlers, write code that toggles two of the LEDs. Make sure to use different LEDs in each handler otherwise they'll fight over the state of the pin. You should be able to leave the priorities of the handlers the same as you configured in the previous exercises. 
+
+Program the board and observe the LEDs. The ones you are modifying in the SysTick interrupt should be flashing repeatedly. If you press the button, you should see the ones in the EXTI handler change. Both interrupts should seem to be coexisting without interfering with each other. Even though they have different priorities because they run for short periods of time, they don't often conflict with each other. Even if both of them were to trigger at the same time, because they are short running the actual impact of being delayed or paused is minor. 
+
+Now lets change the EXTI external interrupt to simulate a long-running interrupt handler. We are going to do this by putting an infinite loop in its code. Just a reminder, never do this in a real system! We are purposefully making an faulty interrupt that refuses to give control of the processor back to the rest of the device.
+
+Remove the old interrupt-style LED code in the EXTI handler and write some new LED code in the infinite loop. Because we are running in an loop like an ordinary thread we'll need to introduce some delay to slow down the LED transitions until they are visible. Remember, never add delay into an interrupt on a real system!
+However, we can't use the HAL delay functions within the interrupt, they won't work properly. You will need to use a delay loop. (see section 2.5.3 in the previous lab)  Alternatively if you are feeling lazy you can simply turn on an LED to signal that the interrupt occurred without some sort of animation. Set the priority of the EXTI interrupt to be 1 (high priority) in the NVIC. And change the priority of the SysTick interrupt to be 2 (medium priority) in the NVIC.
+
+Program the board again and watch the SysTick blink its LEDs. Now press the button and launch the EXTI external interrupt. If you set the priorities as described above the SysTick interrupt should have frozen, while the external interrupt is operating. 
+
+What is happening? The EXTI interrupt is ``starving'' the SysTick one. Because the EXTI interrupt is running for a long period of time the only way the systick handler can occur is if it can interrupt the EXTI handler. Unfortunately, because we changed the systick interrupt to have a lower priority than the EXTI, it is unable to do so.
+
+Technically if the EXTI handler would finish sometime and not be in an infinite loop, the SysTick would eventually have a chance to execute, but very late.  
+
+Now, lets fix the system again. Change the priority of the SysTick handler to 0 (highest priority) and program the board. This should fix the issue and both interrupts should be working. 
+
+In this case it was trivial to decide on the proper priorities for the two interrupts, however in a real system it can become very complex. As a general rule, interrupts used for timing need the highest priority, interrupts coming from communications peripherals need high priority, most others can be placed on medium, and anything long-running should be on low. 
+
+If you must have a long-running high-priority interrupt, you need to be very careful to determine that your other interrupts will function properly. Likewise, even the lowest priority interrupts still have higher preference than the main application thread. If you main thread performs a task, make sure it isn't getting starved as well. 
+
+Even with good priorities, too frequent or too many interrupts can starve things as well. The system stays busy trying to keep up with the flood of requests and lower priority things can be perpetually pushed down on the waiting list. 
 
 \end{document}

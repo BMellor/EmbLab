@@ -504,33 +504,62 @@ These rapid multiple triggers of the external interrupt are caused by button bou
 
 \subsection{Exploring Interrupt Priority}
 % Change priorities of two interrupts
-Normally you want to keep interrupt handlers as short as possible. However, there are some cases where this simply isn't feasible. In situations where a long-running interrupt is possibly you must pay special attention to the priorities of others in the system. 
+Normally you want to keep interrupt handlers as short as possible. However, there are some cases where this simply isn't feasible. In situations where a long-running interrupt exists, you must pay special attention to the priorities of the others in the system. This exercise demonstrates how a long running interrupt can prevent another from executing properly. By setting appropriate priorities in the NVIC, the two interrupts can be adjusted so that they coexist without interfering with each other's operation. 
 
-This exercise demonstrates how a long running interrupt can prevent another from executing properly. By setting appropriate priorities in the NVIC the two interrupts can be adjusted such that they coexist without interfering with each other's operation. 
+To do this we are going to use both the SysTick and EXTI interrupts. Before you begin, you should have both interrupts configured and enabled in your main application.  
 
-To do this we are going to use both the SysTick and EXTI interrupts. Before you begin you should have both interrupts configured and enabled in your main application. 
+\subsubsection{Normal Interrupt Operation}
 
-In each of the interrupt handlers, write code that toggles two of the LEDs. Make sure to use different LEDs in each handler otherwise they'll fight over the state of the pin. You should be able to leave the priorities of the handlers the same as you configured in the previous exercises. 
+This section demonstrates how interrupts of differing priorities can operate normally with each other. 
 
-Program the board and observe the LEDs. The ones you are modifying in the SysTick interrupt should be flashing repeatedly. If you press the button, you should see the ones in the EXTI handler change. Both interrupts should seem to be coexisting without interfering with each other. Even though they have different priorities because they run for short periods of time, they don't often conflict with each other. Even if both of them were to trigger at the same time, because they are short running the actual impact of being delayed or paused is minor. 
+\begin{enumerate}
+    \item In each interrupt handler, write code that toggles two of the board LEDs.
+    \begin{itemize}
+        \item Make sure to use different LEDs in each handler to prevent conflicts.
+        \item Leave the priorities of the interrupt handlers the same as configured in the previous exercises.
+    \end{itemize}
+    \item Program the board and observe the LEDs.
+\end{enumerate}
 
-Now lets change the EXTI external interrupt to simulate a long-running interrupt handler. We are going to do this by putting an infinite loop in its code. Just a reminder, never do this in a real system! We are purposefully making an faulty interrupt that refuses to give control of the processor back to the rest of the device.
+ If both interrupts are configured correctly, the LEDs modified in the SysTick interrupt should be flashing repeatedly. If the Discovery board button is pressed, you should see the LEDs controlled by the EXTI handler update. Both interrupts should seem to be coexisting without interfering with each other. Even though they have different priorities because they run for short periods of time they don't often conflict with each other. Even if they both were to trigger at the same moment, because they are short running the impact of being delayed or paused is minor. 
 
-Remove the old interrupt-style LED code in the EXTI handler and write some new LED code in the infinite loop. Because we are running in an loop like an ordinary thread we'll need to introduce some delay to slow down the LED transitions until they are visible. Remember, never add delay into an interrupt on a real system!
-However, we can't use the HAL delay functions within the interrupt, they won't work properly. You will need to use a delay loop. (see section 2.5.3 in the previous lab)  Alternatively if you are feeling lazy you can simply turn on an LED to signal that the interrupt occurred without some sort of animation. Set the priority of the EXTI interrupt to be 1 (high priority) in the NVIC. And change the priority of the SysTick interrupt to be 2 (medium priority) in the NVIC.
+\subsubsection{``Starving'' Interrupts}
+Now lets change the EXTI external interrupt to simulate a long-running interrupt handler. We are going to do this by putting an infinite loop in its code. 
 
-Program the board again and watch the SysTick blink its LEDs. Now press the button and launch the EXTI external interrupt. If you set the priorities as described above the SysTick interrupt should have frozen, while the external interrupt is operating. 
+\begin{enumerate}
+    \item Remove the previous interrupt-style LED code in the EXTI handler.
+    \item Add an infinite loop to the EXTI handler.
+    \item Write new LED code in the infinite loop as if the interrupt hander were a normal thread.
+    \begin{itemize}
+        \item The infinite loop makes the interrupt behave like an ordinary thread that never returns.
+        \item You'll need to introduce some delay into the loop to slow down the LED transitions until they are visible.
+        \item The HAL delay functions will not work within the interrupt, you must use delay loops.(section 2.5.3 in previous lab)
+        \item If you are feeling lazy you can simply turn on an LED to signal that the interrupt occurred.
+    \end{itemize}
+    \item Set the priority of the EXTI interrupt to be 1 (high priority) in the NVIC.
+    \item Set the priority of the SysTick interrupt to be 2 (medium priority) in the NVIC.
+    \item Program the board and observe the LEDs.
+\end{enumerate}
 
-What is happening? The EXTI interrupt is ``starving'' the SysTick one. Because the EXTI interrupt is running for a long period of time the only way the systick handler can occur is if it can interrupt the EXTI handler. Unfortunately, because we changed the systick interrupt to have a lower priority than the EXTI, it is unable to do so.
+After programming, watch the SysTick interrupt operate normally and blink its LEDs. Now press the button and launch the EXTI external interrupt. If you set the priorities as described above the SysTick interrupt should have frozen, while the external interrupt is operating. 
 
-Technically if the EXTI handler would finish sometime and not be in an infinite loop, the SysTick would eventually have a chance to execute, but very late.  
+What is happening in this situation? The answer is that the EXTI interrupt is ``starving'' the SysTick one. Because the EXTI interrupt runs for an extended period of time the only way the SysTick handler can occur is if it can interrupt the EXTI handler. Unfortunately, because we changed the SysTick interrupt to have a lower priority than the EXTI, it is unable to do so.
 
-Now, lets fix the system again. Change the priority of the SysTick handler to 0 (highest priority) and program the board. This should fix the issue and both interrupts should be working. 
+Technically if the EXTI handler were to finish eventually and not continue in an infinite loop, the SysTick would eventually have the opportunity to execute, but very late.    
 
-In this case it was trivial to decide on the proper priorities for the two interrupts, however in a real system it can become very complex. As a general rule, interrupts used for timing need the highest priority, interrupts coming from communications peripherals need high priority, most others can be placed on medium, and anything long-running should be on low. 
+\subsubsection{Fixing with NVIC Priorities}
 
-If you must have a long-running high-priority interrupt, you need to be very careful to determine that your other interrupts will function properly. Likewise, even the lowest priority interrupts still have higher preference than the main application thread. If you main thread performs a task, make sure it isn't getting starved as well. 
+As shown, a long running interrupt will prevent all others of a lower or equal priority from executing until it finishes. Even though the EXTI interrupt contains an infinite loop, it is still possible to allow the SysTick to operate normally. 
 
-Even with good priorities, too frequent or too many interrupts can starve things as well. The system stays busy trying to keep up with the flood of requests and lower priority things can be perpetually pushed down on the waiting list. 
+\begin{enumerate}
+    \item Set the priority of the SysTick interrupt to be 0 (highest priority) in the NVIC.
+    \item Program the board and observe the LEDs, both interrupts should be working properly.
+\end{enumerate}
+
+In this case, it was trivial to decide on the proper priorities for the two interrupts. However, in a real system, this process can become complicated. As a general rule interrupts used for timing need the highest priority, interrupts from communications peripherals need high priority, many others can be set to medium, and anything long-running should be on low. 
+
+If you must have a long-running, high-priority interrupt you need to be very careful to determine that the others will function properly. Likewise, even the lowest priority interrupts have higher priority than the main application thread. If your main thread performs a task, make sure it isn't getting starved as well. 
+
+Even with good priority settings, too frequent or too many interrupts can starve parts of your application. In this case, the system remains busy attempting to keep up with the flood of requests. This can cause the lowest priority portions to be perpetually pushed down on the waiting list.
 
 \end{document}

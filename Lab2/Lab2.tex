@@ -178,7 +178,7 @@ Open the core programming manual and go to page 71. Beginning here is the regist
 \end{itemize}
 
 \subsection{Interactions Between Multiple Interrupts}
-As the number of enabled interrupts within a system increases, the possibility of an interrupt request occurring during the handler of another becomes likely. Because of this, there must be a deterministic way of dealing with inter-interrupt interactions. The NVIC solves this problem with a system of both software configurable and fixed hardware interrupt priorities. Depending on these priories there are two possible outcomes for multi-interrupt conditions. Figure \ref{tailChain_nesting} shows a graphical representation of each mode of operation.
+As the number of enabled interrupts within a system increases, the possibility of an interrupt request occurring during the handler of another becomes likely. Because of this, there must be a deterministic way of dealing with inter-interrupt interactions. The NVIC solves this problem with a system of both software configurable and fixed hardware interrupt priorities. Depending on these priority settings there are two possible outcomes for multi-interrupt conditions. Figure \ref{tailChain_nesting} shows a graphical representation of each mode of operation.
 
 \begin{figure}[]
     \centering\includegraphics[width=0.6\textwidth]{tailChain_nesting}
@@ -292,7 +292,7 @@ The examples in this section of the lab demonstrate the process of setting up an
 \subsection{Enabling and Setting Priorities for an Interrupt}
 
 
-\subsubsection{Configuring a Peripheral to Generate Interrupts}
+\subsubsection{Configuring a Peripheral to Generate Interrupts} \label{periph_setup}
 Most peripherals have multiple conditions that can trigger an interrupt. These conditions may signal different events or error states that may occur in the operation of the peripheral. Usually all interrupt-based features within a peripheral are disabled by default, this allows the user to enable only the conditions that they wish to manage in their interrupt handler. 
 
 \begin{example}[Enabling the USART RXNE Interrupt]
@@ -306,7 +306,7 @@ Most peripherals have multiple conditions that can trigger an interrupt. These c
     \smallskip
 \end{example}
 
-\subsubsection{Enabling the Interrupt within the NVIC}
+\subsubsection{Enabling the Interrupt within the NVIC} \label{nvic_setup}
 In the previous example we configured the USART to generate an interrupt request whenever new data arrives. However, unless the NVIC is also configured to allow the interrupt it will simply ignore the request. 
 
 Using the CMSIS library functions in \textit{core\_cm0.h} simplifies configuring the NVIC. These functions identify the interrupt to be modified by a number representing its index in the Vector table. These numbers have conveniently been given defined names in the \textit{IRQn\_Type} enumeration within the \textit{stm32f072xb.h} file.  
@@ -337,7 +337,7 @@ Because the NVIC within the STM32F0 has two configuration bits for each interrup
     \ilcode{NVIC\_SetPriority(USART1\_IRQn, 1 );  // Configure to high priority}
     \smallskip
 \end{example}
-\subsection{Setting up the Interrupt Handler}
+\subsection{Setting up the Interrupt Handler}  \label{handler_setup}
 Once the interrupt has been enabled within both the peripheral and NVIC, it is time to define a region of code as the appropriate handler. 
 
 The MDK:ARM toolchain includes a set of function names used for interrupt handlers. These are automatically referenced by the Vector table when compiling and linking. Declaring a function using one of these defined names automatically makes it into an interrupt handler.
@@ -380,26 +380,114 @@ Most peripherals have a status register containing flag bits for pending interru
 % (Online) http://support.saleae.com/hc/en-us/sections/201990573-saleae-users-guide
 
 \section{Lab Assignment: Writing Interrupt-Based Code}
+The following exercises explore basic concepts of interrupt-driven programming, peripheral-interrupt configuration, and how priorities order multiple interrupts. After completing these tasks, make sure to show the lab assistant! Most of your points for the lab will come from demonstrating your solutions.
 
-This manual will be updated with the lab assignment after a few issues have been resolved.  
-%The following four exercises 
-%
-%
-%\subsection{Modifying an Existing Interrupt}
-%% Toggle LEDs in SysTick ISR
-%In this exercise you are going to modify the SysTick interrupt  existing interrupt that the HAL library has already configured. 
-%
+\subsection{Modifying an Existing Interrupt}
+% Toggle LEDs in SysTick ISR
+In this exercise, you will modify the SysTick timer interrupt to perform some user operations. In the project template that STMCube generates, the SysTick timer is already configured as part of the HAL library initialization. 
+
+The SysTick peripheral is a simple countdown timer which begins at a software set value. Once the value of the timer reaches zero, an interrupt is triggered, and the timer resets. By default, the HAL configures the SysTick interrupt to occur once every millisecond. The interrupt handler is located within the \textit{stm32f0xx\_it.c} file.  
+
+\subsubsection{Adding Code to the SysTick Interrupt}
+
+\begin{enumerate}
+    \item Locate the SysTick interrupt handler and write a simple application which blinks or flashes LEDs in the handler.
+    \begin{itemize}
+        \item Choose something reasonable, but have fun. Your code can be a single flashing LED or a complex multi-color pattern. 
+    \end{itemize}
+    \item Configure used GPIO pins in the main application. Don't place run-once code such as initializations in the handler.
+    \item Your modified SysTick handler will be called every millisecond. Because of this periodicity, you can count the number of iterations as a timing basis.  
+    \begin{itemize}
+        \item For example, toggling an LED every 200th time the handler is called results in 200 ms between blinks. 
+        \item You will need to use either a global variable or local-static variable to store interrupt count. 
+        \item \textbf{Do not use delay functions in the interrupt handler.}
+    \end{itemize}
+    \item Remove any existing code within the infinite loop of the main function. 
+    \begin{itemize}
+        \item We want the processor to go to sleep when not executing an interrupt handler.
+        \item Place a call to the \texttt{\_\_WFI()} function in the infinite loop. 
+        \begin{itemize}
+            \item This function executes an assembly \textit{wait for interrupt} (WFI) instruction, and causes the device to enter into ``sleep'' mode. 
+        \end{itemize} 
+    \end{itemize}
+\end{enumerate}
+
+\begin{warning}
+    \textbf{\underline{Never} use any sort of delay within an interrupt handler!} Handler functions are intended to quickly perform work and then return. The HAL delay functions will deadlock if used in interrupts with the same or higher priority than the SysTick.
+\end{warning}
+
+\subsubsection{Changing the Interrupt Configuration}
+Even though the HAL library has already configured the SysTick and enabled the interrupt, we are going to override the default settings in the application. 
+
+\begin{enumerate}
+    \item Use the CMSIS \texttt{SysTick\_Config()} function in your initialization code to set the SysTick interrupt rate. 
+    \begin{itemize}
+        \item The SysTick CMSIS functions are located with the NVIC control library.
+        \item The single argument to the function is the number of processor cycles the timer should count between interrupts. 
+        \begin{itemize}
+            \item This value is calculated by taking the processor clock frequency and dividing by the desired SysTick interrupt frequency. (Use 1 kHz interrupt frequency)
+            \item Since you aren't familiar with the clock system of the STM32F0, use the \texttt{HAL\_RCC\_GetHCLKFreq()} library function to get the value of the active clock source. 
+        \end{itemize}
+    \end{itemize}
+    \item Use the CMSIS functions to enable and set the priority of the SysTick interrupt in the NVIC. 
+    \begin{itemize}
+        \item See the in-lab examples.
+    \end{itemize}
+\end{enumerate}
+
+
 %\subsection{Writing an Efficient Delay Function}
-%% Use SysTick to make ms delay with WFI
-%
-%\subsection{Using External Interrupt Sources}
-%\subsubsection{Configuring the EXTI}
-%% Set up EXTI interrupt
-%\subsubsection{Measuring Interrupt Latency}
-%% Use logic analyzer to measure latency of externall interrupt
-%
-%\subsection{Exploring Interrupt Priority}
-%% Change priorities of two interrupts
+% Use SysTick to make ms delay with WFI
+
+\subsection{Using External Interrupt Sources}
+Writing a simple application based around the SysTick interrupt introduced the concepts of basic interrupt-driven programming. However, modifying the existing interrupt handler of a peripheral which requires minimal configuration doesn't give an accurate representation of the full process.  
+
+In this exercise you will be enabling an external interrupt on the rising-edge of the user button (PA0) pin. 
+
+\subsubsection{Configuring the EXTI}
+External interrupts are managed by the EXTI peripheral, in order to configure an interrupt on the button pin (PA0) there are a number of steps which need to be completed. 
+\begin{enumerate}
+    \item Configure the button pin (PA0) to input-mode, low-speed and with the internal pull-down resistor enabled. 
+    \item Use the RCC to enable the peripheral clock to the EXTI and SYSCFG peripherals.
+    \item 
+\end{enumerate}
+
+In order to configure a pin for an external interrupt you must first determine what SYSCFG multiplexer the signal must be routed through to get to the EXTI peripheral. Figure \ref{exti_mux} shows which groups of pins connect to each of the SYSCFG multiplexers, and to what EXTI input line the output of the multiplexer connects.
+
+After determining the which multiplexer to modify, open the SYSCFG documentation in section 10 of the peripheral reference manual. (page 173) In future labs there won't be provided page numbers, you should get familiar with looking up and navigating the table of contents in each manual.
+
+The EXTICR registers control the pins selected by the SYSCFG multiplexers. You will need to find the appropriate multiplexer in these registers and set it such that PA0 is routed to the EXTI.
+
+Now that the pin is routed properly, you will need to go to the EXTI documentation and enable the interrupt associated with that external input line. (Remember that the external interrupts are the first 16 inputs to the EXTI and that the specific input line is determined by what SYSCFG multiplexer your signal is routed through. Additionally the naming convention is such that ``EXTI3'' would be the 3rd input line, third bit in the control register etc...) 
+The EXTI documentation is in section 12.2 (page 219, under Interrupts and Events) in the peripheral reference manual. 
+
+You will want to review the purpose of the EXTI registers in section XXX of this lab manual or in the register maps of the peripheral reference manual. You will need to enable the interrupt as well as set a rising/positive edge trigger. 
+
+
+Now you will need to find the actual interrupt that the EXTI will request when your configured external interrupt's trigger condition occurs. To do this, we'll need to examine the system Vector table. Open the peripheral reference manual to page 217 or view figure \ref{vector_table} in this lab manual. 
+
+From the vector table we can see that there are three different interrupts reserved for the EXTI peripheral. From their names it appears that each interrupt is reserved for a subset of the input lines of the peripheral. Find the appropriate interrupt and make note of its name or interrupt number. 
+
+Within the stm32f072xb.h file there is the \textit{IRQn\_Type} enumeration defining names for each interrupt number. Find the appropriate EXTI interrupt either through its name, description or interrupt number. The defined name in this enumeration is what you will need to pass to the CMSIS NVIC functions to enable and set the priority of the interrupt. 
+
+Enable the interrupt and set its priority to 1 (high-priority).
+
+
+Now that the interrupt is enabled in all the proper places, we need to define the handler function. See section \ref{handler_setup}. Remember that you will need to clear the status flag/bit in the EXTI pending register inside of your handler, otherwise the interrupt will loop because the request has never been acknowledged. 
+
+You will also want to place code that toggles an LED or advances a pattern in the interrupt handler. Keep in mind that the handler should trigger/be called once per button press. 
+
+
+Does the handler only get called once per button press? Probably not! This is because of button bounce, the EXTI sees the multiple transitions and repeats the interrupt multiple times. Unfortunately it is very difficult to debounce interrupts in software, typically all interrupt lines connected to mechanical switches or buttons need hardware debouncing filters.
+
+For this lab, just ignore the bounce.
+
+% Set up EXTI interrupt
+\subsubsection{Measuring Interrupt Latency}
+% Use logic analyzer to measure latency of external interrupt
+
+\subsection{Exploring Interrupt Priority}
+% Change priorities of two interrupts
 
 
 \end{document}

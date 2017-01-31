@@ -233,7 +233,7 @@ One method of avoiding continuous polling is to utilize the interrupt system of 
 
 The exercises in this lab will be using the ``Wait for Interrupt'' (WFI) assembly instruction which puts the processor into ``sleep'' mode. This is the least drastic of the low-power modes that the STM32F0 offers. In this state, the ARM processor is stopped, but all memory and peripherals operate normally. Any hardware interrupt has the capability to start the processor again; once the interrupt handler exits, the main program will continue the main application thread. Other low-power modes selectively shutdown additional peripherals, system oscillators, and power circuitry. These modes are more limited in the methods available to wake them up, and some of them lose device state.  
 
-\subsection{Extended Interrupts and Events Controller}
+\subsection{Extended Interrupts and Events Controller} \label{exti}
 
 The \textit{Extended Interrupts and Events Controller} (EXTI) is the peripheral that allows non-peripheral sources to trigger interrupts. While typically used to generate interrupts from the GPIO pins of the device, it also has the ability to monitor various internal signals such as the brownout protection circuitry. (low-voltage shutdown)
 
@@ -270,7 +270,7 @@ The EXTI documentation begins on page 219 of the peripheral reference manual. Si
 % Main registers and operation
 
 
-\subsubsection{Pin Multiplexing with the SYSCFG}
+\subsection{Pin Multiplexing with the SYSCFG} \label{syscfg}
 % SYSCFG Muxes
 Although the STM32F0s have the ability to generate external interrupts on almost any pin, there are only 16 available input lines to the EXTI. Because of this, there are a series of pin multiplexers selecting the pins that connect to the limited EXTI inputs.  
 
@@ -286,7 +286,7 @@ The multiplexers are configured by the EXTICRx registers within the SYSCFG perip
     \label{exti_mux}
 \end{figure}
 
-\section{Working With Interrupts}
+\section{Working With Interrupts} 
 The examples in this section of the lab demonstrate the process of setting up an interrupt for the \textit{Universal-Synchronous-Asynchronous-Transmitter} (USART). You are not expected to know how the USART operates, that will be the topic for a later lab, but understand that it is a communications peripheral with has the capability of generating an interrupt after receiving a full byte of data. 
 
 \subsection{Enabling and Setting Priorities for an Interrupt}
@@ -431,7 +431,7 @@ Even though the HAL library has already configured the SysTick and enabled the i
     \end{itemize}
     \item Use the CMSIS functions to enable and set the priority of the SysTick interrupt in the NVIC. 
     \begin{itemize}
-        \item See the in-lab examples.
+        \item See the example in section \ref{nvic_setup}.
     \end{itemize}
 \end{enumerate}
 
@@ -449,38 +449,54 @@ External interrupts are managed by the EXTI peripheral, in order to configure an
 \begin{enumerate}
     \item Configure the button pin (PA0) to input-mode, low-speed and with the internal pull-down resistor enabled. 
     \item Use the RCC to enable the peripheral clock to the EXTI and SYSCFG peripherals.
-    \item 
+    \item Determine and configure the SYSCFG multiplexer routing PA0 to the EXTI peripheral.
+    \begin{itemize}
+        \item See section \ref{syscfg} in the lab manual.
+        \item The SYSCFG is documented in section 10 of the peripheral reference manual. (page 173)
+        \begin{itemize}
+            \item Future labs won't provide page numbers into the documentation. You will want to get familiar with navigating the table of contents of each manual.
+        \end{itemize}
+        \item Each multiplexer indicates the input line/signal of the EXTI to which they connect.
+    \end{itemize}
+    \item Enable the external interrupt within the EXTI peripheral.
+    \begin{itemize}
+        \item See sections \ref{exti} and \ref{periph_setup} in the lab manual.
+        \item  You will need to enable/unmask the specific input line and set an edge trigger condition (your choice)
+        \begin{itemize}
+            \item Remember that the first 16 inputs to the EXTI are used for external interrupts. For example, \textit{EXTI3} is the 3rd input line. 
+        \end{itemize}
+        \item The EXTI is documented in section 12.2 of the peripheral reference manual. (page 219, under Interrupts and Events)
+    \end{itemize}
+    \item Find the EXTI interrupt number that matches the enabled input.
+    \begin{itemize}
+        \item  See section \ref{nvic_setup} in the lab manual.
+        \item The EXTI has multiple interrupts, each of these handle a subset of its input lines.
+        \item  The defined names in the Vector table and interrupt number definitions suggest which input lines the interrupt handles.
+    \end{itemize}
+    \item Enable and configure the interrupt's priority in the NVIC.
+    \begin{itemize}
+        \item See section \ref{nvic_setup} in the lab manual.
+        \item Set the priority to be 1. (high-priority)
+    \end{itemize}
+    \item Define the interrupt handler function.
+    \begin{itemize}
+        \item See section \ref{handler_setup} in the lab manual.
+        \item Remember to clear the appropriate flag in the EXTI pending register within the handler.
+        \begin{itemize}
+            \item  Otherwise the handler will loop because the interrupt request was never acknowledged.
+        \end{itemize}
+        \item Place code that blinks or modifies the LEDs on the Discovery board within the handler.
+        \begin{itemize}
+            \item Keep in mind that the handler will trigger depending on the conditions you set in the EXTI. 
+        \end{itemize}
+    \end{itemize}
 \end{enumerate}
 
-In order to configure a pin for an external interrupt you must first determine what SYSCFG multiplexer the signal must be routed through to get to the EXTI peripheral. Figure \ref{exti_mux} shows which groups of pins connect to each of the SYSCFG multiplexers, and to what EXTI input line the output of the multiplexer connects.
+One of the biggest difficulties with interrupts is the number of steps that need to be completed correctly before getting any positive result. 
 
-After determining the which multiplexer to modify, open the SYSCFG documentation in section 10 of the peripheral reference manual. (page 173) In future labs there won't be provided page numbers, you should get familiar with looking up and navigating the table of contents in each manual.
+Assuming that you set a single-edge trigger in the EXTI, you should expect to see your handler called once per button press. However, there is a good chance that you see multiple rapid transitions instead. If this occurs when pressing or releasing the button, don't worry because it's not your code.
 
-The EXTICR registers control the pins selected by the SYSCFG multiplexers. You will need to find the appropriate multiplexer in these registers and set it such that PA0 is routed to the EXTI.
-
-Now that the pin is routed properly, you will need to go to the EXTI documentation and enable the interrupt associated with that external input line. (Remember that the external interrupts are the first 16 inputs to the EXTI and that the specific input line is determined by what SYSCFG multiplexer your signal is routed through. Additionally the naming convention is such that ``EXTI3'' would be the 3rd input line, third bit in the control register etc...) 
-The EXTI documentation is in section 12.2 (page 219, under Interrupts and Events) in the peripheral reference manual. 
-
-You will want to review the purpose of the EXTI registers in section XXX of this lab manual or in the register maps of the peripheral reference manual. You will need to enable the interrupt as well as set a rising/positive edge trigger. 
-
-
-Now you will need to find the actual interrupt that the EXTI will request when your configured external interrupt's trigger condition occurs. To do this, we'll need to examine the system Vector table. Open the peripheral reference manual to page 217 or view figure \ref{vector_table} in this lab manual. 
-
-From the vector table we can see that there are three different interrupts reserved for the EXTI peripheral. From their names it appears that each interrupt is reserved for a subset of the input lines of the peripheral. Find the appropriate interrupt and make note of its name or interrupt number. 
-
-Within the stm32f072xb.h file there is the \textit{IRQn\_Type} enumeration defining names for each interrupt number. Find the appropriate EXTI interrupt either through its name, description or interrupt number. The defined name in this enumeration is what you will need to pass to the CMSIS NVIC functions to enable and set the priority of the interrupt. 
-
-Enable the interrupt and set its priority to 1 (high-priority).
-
-
-Now that the interrupt is enabled in all the proper places, we need to define the handler function. See section \ref{handler_setup}. Remember that you will need to clear the status flag/bit in the EXTI pending register inside of your handler, otherwise the interrupt will loop because the request has never been acknowledged. 
-
-You will also want to place code that toggles an LED or advances a pattern in the interrupt handler. Keep in mind that the handler should trigger/be called once per button press. 
-
-
-Does the handler only get called once per button press? Probably not! This is because of button bounce, the EXTI sees the multiple transitions and repeats the interrupt multiple times. Unfortunately it is very difficult to debounce interrupts in software, typically all interrupt lines connected to mechanical switches or buttons need hardware debouncing filters.
-
-For this lab, just ignore the bounce.
+These rapid multiple triggers of the external interrupt are caused by button bounce. (see section 2.5.5 in the previous lab) The EXTI sees multiple transitions during the bouncing period and repeats the interrupt multiple times. Unfortunately, it's hard to debounce interrupts in software. Typically all interrupt lines connected to mechanical switches or buttons need hardware debouncing filters. For this lab, just ignore the bounce.
 
 % Set up EXTI interrupt
 \subsubsection{Measuring Interrupt Latency}

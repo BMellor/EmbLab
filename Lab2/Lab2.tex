@@ -501,6 +501,54 @@ These rapid multiple triggers of the external interrupt are caused by button bou
 % Set up EXTI interrupt
 \subsection{Measuring Interrupt Latency}
 % Use logic analyzer to measure latency of external interrupt
+In this exercise, you will be using a debugging tool known as a logic analyzer to help estimate the latency between an interrupt request and the execution of its handler. Although it isn't possible to accurately measure the individual causes, we can measure the total delay caused by the processor flushing its pipeline, loading a new address to branch, and performing operation which indicate that we've entered the interrupt handler. 
+
+If you don't you have your own Saleae logic analyzer, you can check one out from the stockroom window in the lab. You will need your U-Card as they will want to keep it until you return the device. 
+
+\subsubsection{About Logic Analyzers}
+
+The basic idea behind a logic analyzer is that it is a multi-channel digital capture tool, similar to how an oscilloscope is used to view analog signals. Unlike an oscilloscope, most logic analyzers don't capture and display data in real-time. However, even the inexpensive Saleae devices have at least four input channels and professional units may have hundreds. 
+
+Logic analyzers allow the user to capture sections of digital communications between devices. Typically you configure the device to start capturing data automatically when certain conditions are met. Afterward, the data is displayed and protocol decoders are run to annotate the data with information about what was captured.
+
+Rather than duplicate a large portion of the Saleae user manual, this lab will suggest reading portions of the online documentation throughout this exercise. The entire manual is linked here:
+\href{http://support.saleae.com/hc/en-us/sections/201990573-saleae-users-guide}{\textbf{Saleae Users Guide}}
+ 
+\subsubsection{Preparing the Interrupt Handler} 
+In order to detect when the interrupt handler begins executing, we need to output some sort of physical signal that the logic analyzer can detect. The easiest method to do this is to set a pin high. When doing this we want to make sure to use an efficient method that won't waste too much time waiting for other instructions or loading and storing values from memory. 
+
+Because of this, place the provided line of code directly at the beginning of the interrupt handler before anything else. 
+ 
+\ilcode{GPIOC->BSRR = 0x000003C0;   // Set all LED pins high}
+\subsubsection{Connecting and Measuring Latency}
+ 
+ 
+ \begin{enumerate}
+     \item Familiarize yourself with the connectors on the Saleae device by reviewing the \href{http://support.saleae.com/hc/en-us/articles/210244483-Wire-Harness-Test-Clips}{\textbf{Wire Harness \& Test Clips}} section of the user guide.
+     \item Connect one of the \textit{GND} wires on the logic analyzer to a ground pin on the Discovery board.
+     \begin{itemize}
+         \item Because the Discovery board has male pin headers, you can simply push the connectors of the analyzer wires onto the pins. 
+     \end{itemize}
+     \item Connect the \textit{black} signal wire (not a black ground wire) to pin PA0 on the discovery board. This will be our indicator that the interrupt signal was requested. 
+     \item Connect the \textit{brown} signal wire to any of the LED pins on the discovery board. (PC6-PC9) . 
+     \begin{itemize}
+         \item These are our indicator that the interrupt handler has been entered.
+         \item The chosen LED needs to start cleared and should not be modified by any other interrupts. 
+     \end{itemize}
+     
+     \item Review the basics of capturing data with the \href{http://suppsort.saleae.com/hc/en-us/articles/210244503-Collecting-Data-Device-Settings}{\textbf{Collecting Data \& Device Settings}} section of the user guide.
+     \item Set a rising-edge trigger on the \textit{black} signal wire, and begin a capture session.
+     \begin{itemize}
+         \item The analyzer should open a window indicating that it is waiting for the trigger signal. 
+     \end{itemize}
+     \item Push the Discovery board button, the LEDs should appear to light instantly. 
+     \item Once the capture has finished, review the section on  \href{http://support.saleae.com/hc/en-us/articles/210244513-Measurements-Timing-Markers-and-Bookmarks}{\textbf{Measurements, Timing Markers, and Bookmarks}}.
+     \item Measure the delay between the \textit{black} signal rising-edge and the \textit{brown} signal rising-edge. 
+     \begin{itemize}
+         \item This is the estimated latency between the interrupt signal and handler execution.
+         \item Write this value down and take a screenshot of the analyzer window, you will need them for your post-lab assignment.
+     \end{itemize}
+ \end{enumerate}
 
 \subsection{Exploring Interrupt Priority}
 % Change priorities of two interrupts

@@ -1,15 +1,14 @@
-Introduction to Timers
-	SysTick timer
-		last lab modified its interrupt
-		simple down-counter, generates ISR when hit zero
-		used to create fixed-time periodic interrupts
-	
+\section{Introduction to Timers}
 	Why have timer circuits?
+		SysTick timer
+			last lab modified its interrupt
+			simple down-counter, generates ISR when hit zero
+			used to create fixed-time periodic interrupts
 		Hard and inefficient to measure time with only instruction count
 		Have hardware to count processor or other clock source in the chip
 		Means you can measure time to schedule operations
 		
-	Systick vs Peripheral Timers
+	\subsection{Systick vs Peripheral Timers}
 		The SysTick is very limited, mainly used for just a timebase (Delay libraries, RTOS scheduler etc...)
 		The peripheral timers of the STM32F0 have more advanced capabilities than generating simple interrupts when they reload their value. 
 		Here are a few basic features:
@@ -18,7 +17,79 @@ Introduction to Timers
 			Generate interrupts at multiple conditions 
 				Can generate interrupts on top, bottom or even arbitrary counter values. 
 				These are selected by the different modes of operation that the timer can be placed into. 
-			Timers can directly modify some GPIO pin outputs without requiring an interrupt. Used mainly for waveform generation.
-			Can directly measure the time between changes on input pins.	
+			Ability to directly modify some GPIO pin outputs without requiring an interrupt. Used mainly for waveform generation. (capture-compare, PWM)
+			Can directly read some GPIO input pins to measure the time between changes. (input capture)	
 			
+	\subsection{Timers in the STM32F072}
+		Show table of timers in the STM32F072
+		Discuss basic features: (BRIEFLY!)
+			Timer Type
+			Counter resolution/size
+			Counter Type
+			Prescaler
+			DMA Request
+			Capture/compare channels
+			Complimentary outputs
 	
+	
+\section{Using Timers to Generate Interrupts and Events}
+	
+	\subsection{Using the Timer Documentation}
+		
+		
+		
+	\subsection{Basic Timer Modes of Operation}
+	
+	
+\section{Using Timers to Generate or Measure Signals}
+					
+	\subsection{Input Capture Mode}
+		Keep brief, not focus of lab
+		Basic theory and graphical example		
+		Simple use-cases: stopwatch, tracking motor speed using a click-wheel
+			will be using a fancy version of input capture mode (quadrature encoder mode) to track speed and direction of the motor in later labs.
+		Won't be using in this lab, look at the documentation for details
+
+	\subsection{Output Compare Mode}
+		Use subsubsections to differentiate between different output modes
+		
+	
+	\subsection{Pulse-Width Modulation (PWM) Mode}
+		What is PWM?
+		What is it used for? How does it approximate an analog signal?
+			low-pass filter
+				electronic, mechanical (motor or speaker), others (human eye)
+		(figure of PWM representing sinewave)
+		
+		How the STM32F0 generates PWM (fancier form of output compare)
+		Perhaps in list mode where the registers involved are listed with their function?
+		(figure of edge-aligned mode/sawtooth with appropriate markings)
+	
+\section{Configuring GPIO pins to Alternate Function Mode}
+	What is Alternate Function Mode?
+	Need to tell the GPIO hardware to allow the timer to directly control the pin output state
+	Connecting a pin to an internal peripheral of the device is called "Alternate Function Mode"
+	In the STM32F0s most peripherals are directly connected to specific sets of pins. 
+		While you can't assign an internal signal to an arbitrary pin, they do give you a few pin options to choose.
+		Most GPIO pins have multiple possible alternate functions, need to look up. 
+			
+	Use chip datasheet (Pinouts and pin descriptions section)
+		 
+	\subsection{Finding Available Pins on a Device Package}
+		Using a 64-pin LQFP (LQFP64)
+		Table 13. STM32F072x8/xB pin definitions
+		Only have pins that have physical pin numbers under the LQFP64 column. Table lists pin assignments for all chip packages the STM32F072 device is produced in.
+		Alternate functions listed, will be talking about other columns of table in later labs.
+		(marked Figure of table 13, package column highlighted, pin name and possible alternate functions)
+
+		Example: Chose arbitrary alternate function for a peripheral and walk through the process of finding pins
+		
+		(add in section on how to graphically do this with stmcube later)
+		
+	\subsection{Selecting an Alternate Function}
+		Demonstrate the AFR registers in the GPIO peripheral
+		Once have pins that can use the AF, need to find what specific AF number it is for that pin.
+		Use tables 14-19 in the chip datasheet
+		(marked figure of table 14-19, pick a GPIO and an alternate function)
+		
+		Example: Find AF number and select for pin in previous example.	

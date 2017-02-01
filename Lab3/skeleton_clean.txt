@@ -1,0 +1,24 @@
+Introduction to Timers
+	SysTick timer
+		last lab modified its interrupt
+		simple down-counter, generates ISR when hit zero
+		used to create fixed-time periodic interrupts
+	
+	Why have timer circuits?
+		Hard and inefficient to measure time with only instruction count
+		Have hardware to count processor or other clock source in the chip
+		Means you can measure time to schedule operations
+		
+	Systick vs Peripheral Timers
+		The SysTick is very limited, mainly used for just a timebase (Delay libraries, RTOS scheduler etc...)
+		The peripheral timers of the STM32F0 have more advanced capabilities than generating simple interrupts when they reload their value. 
+		Here are a few basic features:
+			Selectable and prescalable clock sources
+				The timers have built-in frequency dividers (prescaler) to reduce the input clock signal so they can count at more arbitrary rates. 
+			Generate interrupts at multiple conditions 
+				Can generate interrupts on top, bottom or even arbitrary counter values. 
+				These are selected by the different modes of operation that the timer can be placed into. 
+			Timers can directly modify some GPIO pin outputs without requiring an interrupt. Used mainly for waveform generation.
+			Can directly measure the time between changes on input pins.	
+			
+	

@@ -819,11 +819,11 @@
      pagecolor="#ffffff"
      bordercolor="#666666"
      borderopacity="1.0"
-     inkscape:pageopacity="0.0"
+     inkscape:pageopacity="1"
      inkscape:pageshadow="2"
      inkscape:zoom="0.98994949"
-     inkscape:cx="192.08227"
-     inkscape:cy="727.51834"
+     inkscape:cx="360.88878"
+     inkscape:cy="678.09425"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -914,7 +914,7 @@
            height="321.22852"
            x="-59.598999"
            y="93.72744" /></flowRegion><flowPara
-         id="flowPara4331"></flowPara></flowRoot>    <path
+         id="flowPara4331" /></flowRoot>    <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        d="m 98.548823,526.54717 134.810267,-140.51336 134.54799,140.25116 69.01907,-71.99393 69.77156,72.34433 108.60718,-112.80567 40.20868,41.98201"
        id="path4497-4"

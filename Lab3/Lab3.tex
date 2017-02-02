@@ -94,22 +94,32 @@
 \chapter{Timers, PWM and GPIO Alternate Functions}
 
 \section{Introduction to Timers}
-    Why have timer circuits?
-        SysTick timer
-            last lab modified its interrupt
-            simple down-counter, generates ISR when hit zero
-            used to create fixed-time periodic interrupts
-        Hard and inefficient to measure time with only instruction count
-        Have hardware to count processor or other clock source in the chip
-        Means you can measure time to schedule operations
+The last lab used the SysTick timer to generate a periodic interrupt. The SysTick is a simple peripheral with a 24-bit down-counting counter that triggers an interrupt as it reaches zero. The primary purpose of the SysTick timer is to generate a stable system ``tick'' or heartbeat/timing reference signal. 
+
+this heartbeat signal is used to signal the passage of a unit of time. Some common places where the SysTick is used is in the HAL delay libraries and the scheduler and context switcher of applications built upon real-time operating systems. 
+
+Why is getting accurate timing so important? Truth is it's hard and inefficient to measure time simply by the processor without some sort of dedicated hardware like a timer. 
+
+Timers are at their core simply a register the increments or decrements whenever a trigger signal occurs. Upon this are built the capability to generate hardware interrupts, like the SysTick However the SysTick is the simplest of the on-board timer peripherals.
+
+%    Why have timer circuits?
+%        SysTick timer
+%            last lab modified its interrupt
+%            simple down-counter, generates ISR when hit zero
+%            used to create fixed-time periodic interrupts
+%        Hard and inefficient to measure time with only instruction count
+%        Have hardware to count processor or other clock source in the chip
+%        Means you can measure time to schedule operations
     
     \subsection{Systick vs Peripheral Timers}
-        The SysTick is very limited, mainly used for just a timebase (Delay libraries, RTOS scheduler etc...)
-        The peripheral timers of the STM32F0 have more advanced capabilities than generating simple interrupts when they reload their value. 
-        
-        (Block diagram of timer 2 \& 3)
+     The SysTick exists within the actual ARM core 
+    
+%        The SysTick is very limited, mainly used for just a timebase (Delay libraries, RTOS scheduler etc...)
+%        The peripheral timers of the STM32F0 have more advanced capabilities than generating simple interrupts when they reload their value. 
+%        
+%        (Block diagram of timer 2 \& 3)
         \begin{figure}[]
-            \centering\includegraphics[width=0.75\textwidth]{block_timers}
+            \centering\includegraphics[width=\textwidth]{block_timers}
             \caption{Block diagram of timers 2 \& 3}
             \label{block_timers}
         \end{figure}
@@ -126,7 +136,7 @@
     \subsection{Timers in the STM32F072}
         (Show table of timers in the STM32F072)
         \begin{figure}[]
-            \centering\includegraphics[width=0.75\textwidth]{avaliable_timers}
+            \centering\includegraphics[width=\textwidth]{avaliable_timers}
             \caption{STM32F072RB hardware timers}
             \label{avaliable_timers}
         \end{figure}
@@ -177,7 +187,7 @@
     
     (combination figure showing sawtooth/triangle waves for counter value)
     \begin{figure}[]
-        \centering\includegraphics[width=0.75\textwidth]{count_modes}
+        \centering\includegraphics[width=\textwidth]{count_modes}
         \caption{Timer counting modes and update interrupts}
         \label{count_modes}
     \end{figure}
@@ -233,7 +243,7 @@
         
         (figure of edge-aligned toggle on match )
         \begin{figure}[]
-            \centering\includegraphics[width=0.75\textwidth]{ocomp_mode}
+            \centering\includegraphics[width=\textwidth]{ocomp_mode}
             \caption{Output Compare mode with pin toggle on compare match.}
             \label{ocomp_mode}
         \end{figure}
@@ -248,7 +258,7 @@
         
     (figure of PWM representing sinewave)
     \begin{figure}[]
-        \centering\includegraphics[width=0.75\textwidth]{pwm_sine}
+        \centering\includegraphics[width=\textwidth]{pwm_sine}
         \caption{PWM approximation of an analog sine-wave.}
         \label{pwm_sine}
     \end{figure}
@@ -257,7 +267,7 @@
     Perhaps in list mode where the registers involved are listed with their function?
     (figure of edge-aligned mode/sawtooth with appropriate markings)
      \begin{figure}[]
-        \centering\includegraphics[width=0.75\textwidth]{pwm_pin}
+        \centering\includegraphics[width=\textwidth]{pwm_pin}
         \caption{Edge-aligned PWM mode and output pin state.}
         \label{pwm_pin}
     \end{figure}
@@ -280,7 +290,7 @@
     
     (marked Figure of table 13, package column highlighted, pin name and possible alternate functions)
     \begin{figure}[]
-        \centering\includegraphics[width=0.75\textwidth]{chip_pins}
+        \centering\includegraphics[width=0.8\textwidth]{chip_pins}
         \caption{Subset of table 13 - STM32F072x8/xB Datasheet}
         \label{chip_pins}
     \end{figure}
@@ -297,8 +307,8 @@
     
     (marked figure of table 14-19, pick a GPIO and an alternate function) 
     \begin{figure}[]
-        \centering\includegraphics[width=0.75\textwidth]{func_pins}
-        \caption{Subset of table 14 - STM32F072x8/xB Datasheet}
+        \centering\includegraphics[width=\textwidth]{func_pins}
+        \caption{Subset of table 15 - STM32F072x8/xB Datasheet}
         \label{func_pins}
     \end{figure}
    	

@@ -1,0 +1,24 @@
+Figure List
+-----------------------------
+
+Systick vs Peripheral Timers
+	(Block diagram of timer 2 & 3) (block_timers)
+	
+Timers in the STM32F072	
+	(table of timers in the STM32F072) (available timers)
+	
+Basic Timer Operation	
+	(combination figure showing sawtooth/triangle waves for counter value) (count_modes)
+	
+Output Compare Mode
+	(figure of edge-aligned toggle on match ) (ocomp_mode)
+
+Pulse-Width Modulation (PWM) Mode
+	(figure of PWM representing sinewave) (pwm_sine)
+	(figure of edge-aligned mode/sawtooth with appropriate markings) (pwm_pin)
+
+Finding Available Pins on a Device Package
+	(marked Figure of table 13, package column highlighted, pin name and possible alternate functions) (chip_pins)
+
+Selecting an Alternate Function
+	(marked figure of table 14-19, pick a GPIO and an alternate function) (func_pins)

@@ -5,6 +5,8 @@
 \input{structure} % Insert the commands.tex file which contains the majority of the structure behind the template
 \usepackage{float}
 
+\usepackage{amsmath}
+
 \usepackage{listings} 
 \lstset
 { 
@@ -101,24 +103,12 @@ this heartbeat signal is used to signal the passage of a unit of time. Some comm
 Why is getting accurate timing so important? Truth is it's hard and inefficient to measure time simply by the processor without some sort of dedicated hardware like a timer. 
 
 Timers are at their core simply a register the increments or decrements whenever a trigger signal occurs. Upon this are built the capability to generate hardware interrupts, like the SysTick. However, the SysTick is the simplest of the on-board timer peripherals.
-
-%    Why have timer circuits?
-%        SysTick timer
-%            last lab modified its interrupt
-%            simple down-counter, generates ISR when hit zero
-%            used to create fixed-time periodic interrupts
-%        Hard and inefficient to measure time with only instruction count
-%        Have hardware to count processor or other clock source in the chip
-%        Means you can measure time to schedule operations
     
     \subsection{Systick vs Peripheral Timers}
      Because the SysTick peripheral has a very simple purpose, to generate periodic interrupts, it doesn't offer any features that make it useful for more complicated tasks. 
      
      Unlike the SysTick, peripheral timers within the STM32F0 are designed to be useful in whatever tasks the user application can come up with. Because of this they are fairly complicated devices with a large variety of features. Figure \ref{block_timers} shows the block diagram for general-purpose timers 2 \& 3 in the STM32F072.     
-%        The SysTick is very limited, mainly used for just a timebase (Delay libraries, RTOS scheduler etc...)
-%        The peripheral timers of the STM32F0 have more advanced capabilities than generating simple interrupts when they reload their value. 
-%        
-%        (Block diagram of timer 2 \& 3)
+
         \begin{figure}[]
             \centering\includegraphics[width=\textwidth]{block_timers}
             \caption{Block diagram of timers 2 \& 3}
@@ -132,14 +122,7 @@ Timers are at their core simply a register the increments or decrements whenever
             \item \textbf{Directly Modify GPIO Pins} -- Many peripheral timers can directly set or capture GPIO pin states to measure or generate digital signals.  
         \end{enumerate}
         
-%        Here are a few basic features:
-%            Selectable and prescalable clock sources
-%                The timers have built-in frequency dividers (prescaler) to reduce the input clock signal so they can count at more arbitrary rates. 
-%            Generate interrupts at multiple conditions 
-%                Can generate interrupts on top, bottom or even arbitrary counter values. 
-%                These are selected by the different modes of operation that the timer can be placed into. 
-%        Ability to directly modify some GPIO pin outputs without requiring an interrupt. Used mainly for waveform generation. (capture-compare, PWM)
-%        Can directly read some GPIO input pins to measure the time between changes. (input capture)	
+	
     
     \subsection{Timers in the STM32F072}
         %(Show table of timers in the STM32F072)
@@ -163,16 +146,7 @@ Timers are at their core simply a register the increments or decrements whenever
             \item \textbf{Complimentary Outputs} -- Some capture/compare circuity has the ability to generate complimentary or opposite outputs on GPIO pins. This generates an effect similar to differential signaling 
         \end{itemize}
         
-        
-%        Discuss basic features: (BRIEFLY!)
-%            Timer Type
-%            Counter resolution/size
-%            Counter Type
-%            Prescaler
-%            DMA Request
-%            Capture/compare channels
-%            Complimentary outputs
-%    
+  
 
 \section{Using the Timer Documentation}
     At this point the peripherals that the labs are going to be discussing are going to be reaching the level of complexity that the lab manuals are not going to be able to provide enough documentation to complete the lab assignments without additional reading in the datasheets and peripheral reference manual. 
@@ -186,11 +160,6 @@ Timers are at their core simply a register the increments or decrements whenever
     \subsubsection{Organization of Peripheral Documentation}
     The each section of the peripheral reference manual follows a similar organization when documenting a peripheral. 
     
-    
-%##    The timer peripherals in the STM32F0 are complex, it isn't possible to document them in the lab manual
-%##    MUST get familiar with searching the peripheral reference manual
-%##    For these sections will be using the documentation on timers 2\&3 
-%##        They're not super simple timers, but not the advanced one either
 %        Their documentation is 65 pages long... (and dense)
 %    
 %    Reference manual documentation goes in this format:
@@ -209,7 +178,7 @@ Timers are at their core simply a register the increments or decrements whenever
 
 \section{Using Timers to Generate Interrupts and Events}
 
-    One of the most basic uses of a timer is to generate periodic interrupts. Unlike the SysTick timer which is typically configured once and to a specific base unit of time, the peripheral timers are available to use for arbitrary timing periods and can be used as event counters when using alternate signals as clock sources. Because their input prescaler can be used to divide the input clock by arbitrary integer values, it is possible to generate very long timer periods or match strange timing requirements that aren't multiples of the system clock. Section 18.3 \textit{TIM2 and TIM3 Functional Description} of the peripheral reference manual documents the following in greater detail. 
+    One of the most basic uses of a timer is to generate periodic interrupts. Unlike the SysTick timer which is typically configured once and to a specific base unit of time, the peripheral timers are available to use for arbitrary timing periods and can be used as event counters when using alternate signals as clock sources. Because their input prescaler can be used to divide the input clock by arbitrary integer values, it is possible to generate very long timer periods or match strange timing requirements that aren't multiples of the system clock. Section 18.3 \textit{TIM2 and TIM3 Functional Description} of the peripheral reference manual documents the following sections in greater detail. 
 
     There are three registers that form the basic operations of a timer peripheral. 
     \subsubsection{TIMx\_CNT -- Timer Counter Register}
@@ -218,8 +187,7 @@ Timers are at their core simply a register the increments or decrements whenever
     The PSC register is used to divide the input clock frequency to the timer. It's value is 0-indexed meaning that a value of 0 in the PSC register divides the clock source by 1. (no frequency scaling) Likewise a value of 1 in the PSC register divides the clock source by 2 and causes the timer to count at half the clock frequency. The PSC can divide the input clock by any integer value that will fit in its 16-bit width. 
     \subsubsection{TIMx\_ARR -- Timer Auto-Reload Register}
     Although a timer has a physical hardware size to its counter register, it is possible to set an artificial top limit. The value in the ARR register is the trigger point where the timer resets and begins to count a new period. The actual behavior of the timer depends on its counting mode and will be discussed more in a later section. 
-%    These timer modes make use of the basic time-base unit of the timer. 
-%    This portion does what you'd expect from the timer (it counts)
+
     
     \subsection{Basic Timer Operation}
     
@@ -231,24 +199,8 @@ Timers are at their core simply a register the increments or decrements whenever
         \item \textbf{Center-aligned Mode (up/down counting)} -- In center-aligned mode, the timer starts by counting upward from 0 until the auto-reload value. Once the upper limit is reached, the counting direction reverses and the timer counts downwards towards zero.
     \end{itemize}
 
-    
-    
-%   % Basic registers used in these modes (not including control/setup registers)
-%%        timer counter
-%%        prescaler 
-%%        auto-reload
-%        
-%        control registers   ################### Suggest what each register does, for example enable timer in CR1
-%        CR1 \& CR2
-%        DIER
-%        SR
-%        
-%    
-%    up, down, up/down (center-aligned) counting modes
-    
-    %(combination figure showing sawtooth/triangle waves for counter value)
     \begin{figure}[]
-        \centering\includegraphics[width=\textwidth]{count_modes}
+        \centering\includegraphics[width=0.75\textwidth]{count_modes}
         \caption{Timer counting modes and update interrupts}
         \label{count_modes}
     \end{figure}
@@ -268,108 +220,115 @@ Timers are at their core simply a register the increments or decrements whenever
         \item\textbf{TIMx\_DIER} -- The DMA/Interrupt Enable Register controls the possible interrupt sources in the timer.
         \item\textbf{TIMx\_SR} -- The Status Register contains pending flags that must be cleared in interrupt handlers.
     \end{itemize}
-    %control registers   ################### Suggest what each register does, for example enable timer in CR1
-    %        CR1 \& CR2
-    %        DIER
-    %        SR
-    
-    
-%    UEV - Update event, occurs when the counter value is reset by hardware
-%        this can happen at counter overflow/underflow
-%        whenever the timer is reset to 0 because it reached the ARR value
-%        whenever the timer changes direction (center aligned mode)
-%    Other interrupts are generated by the capture/compare system
-    
+
     \subsection{Selecting Timer Frequency and Interrupt Period}	
-    choosing a frequency the timer runs at (keep BRIEF)
-    selecting a clock source
-        internal clock, selected by the clocking system when configuring the project (most used)
-        external clock pin for timer
-            works on a configurable edge like the EXTI external interrupts
-        Internal trigger inputs
-            These signals can connect multiple peripherals together
-            Used to chain timers together, or count events generated by other types of peripherals
-    
+    The peripheral timers in the STM32F0 have the ablility to use a few different sources for their clock input. 
+    \begin{itemize}
+        \item\textbf{Internal Peripheral Clock} -- This is the most commonly used clock source and is determined by the clock distribution system. In out toolchain, this frequency is configured by the STMCubeMX program during project generation. 
+        \item\textbf{External Clock Pin} -- Many timers have the ability to use an external clock source provided by an input pin. This source may have a unique frequency or higher accuracy than the processor clock.
+        \item\textbf{Internal Trigger Inputs} -- Some peripherals can generate trigger events that are visible throughout the device. This mode is used to chain timers together or count events generated by other types of peripherals.
+    \end{itemize}
+ 
     \subsubsection{Using the Prescaler}
-        remember that it's 0-biased so subtract 1 from the desired divider
-        (prescaler of 1 divides frequency by half)
-    
+      
+        The primary purpose of the timer prescaler is to determine the base unit of time that a single ``tick'' or count within the actual timer represents. Consider a timer operating at 8Mhz, at this frequency the period of time between each update of the timer's value would be one-eighth of a micro-second or 125ns. While it is possible to use this unit of time as a basis for counting longer periods, it may not be convenient. 
+        
+        The prescaler allows us to convert the input clock frequency into more convenient units. For example, if we wanted to count something with a duration in milliseconds, it would be reasonable to divide the input 8Mhz clock by a factor of 8000, giving us a base unit of 1ms between each timer count. 
+        
+        Within the timer hardware, the value of the prescaler register (PSC) is 0-indexed. This means that the value written to the PSC register should always be one less than the desired prescaler value. Conveniently this also means that the default value of 0 in the PSC register divides by 1, performing no frequency division on the input clock. 
+
     \subsubsection{Calculating Register Values}
-        calculating the timer ARR and prescaler values from a desired interrupt period 
+        Using both the prescaler and auto-reload register makes configuring a timer to have a specific period trivial. First consider the unit of time that your desired period is in, and use the prescaler to convert the timer's base unit to either the same, or a convenient multiple/divisor. Afterward, use the auto-reload register to count the desired number of time units to make the target period. 
+        
+        If you are attempting to generate a very long period, you may have to use larger or more granular base units because the physical size of the timer may not be sufficient to count that high at a fine resolution. However in many cases it is possible to use small prescaler values in order to have finer granularity when counting.
+        The following four equations may be helpful when selecting prescalar and auto-reload values from a target period or frequency. 
+        
+        %\begin{displaymath}
+        \begin{align*}
+            & T_{TARGET} = \frac{(PSC-1)}{f_{CLK}} * ARR & & f_{TARGET} = \frac{f_{CLK}}{(PSC-1) * ARR}\\[1em]
+            & PSC = \frac{f_{CLK}}{ARR * f_{TARGET}}-1 & & ARR = \frac{f_{CLK}}{(PSC+1) * f_{TARGET}}
+        \end{align*}
+        %\end{displaymath}
         	
-        \begin{example}[Calculating ARR and PSC Values] 
-                Example: Do a calculation for an arbitrary period, perhaps multiple ways to do the same. 
-        \end{example}
+            
+        \begin{center}
+            \begin{example}[Calculating ARR and PSC Values] 
+               For this example we'll set a timer to produce an interrupt at 20Hz assuming that the timer's input clock is 8Mhz. \\
+               
+               A target frequency of 20Hz gives a 50ms period. To achieve this we can divide the 8Mhz clock by 8000 to reduce our timer's frequency to 1kHz. Counting at 1kHz gives us 1ms per timer count, so we need 50 counts to reach our target period. We can get our desired interrupt by setting the PSC to 7999, the ARR to 50, and enabling the UEV interrupt in the control registers. 
+            \end{example}
+        \end{center}
+        
     
 
 \section{Using Timers to Generate or Measure Signals}
-    These modes all use the capture/compare circuity of the timer
-    Brief overview of the capture/compare unit
-    
-    The mode of operation of the capture/compare unit is set by the 3 capture/compare mode registers. (CCMR1-3)				
+%    These modes all use the capture/compare circuity of the timer
+%    Brief overview of the capture/compare unit
+%    
+%    The mode of operation of the capture/compare unit is set by the 3 capture/compare mode registers. (CCMR1-3)				
     
     \subsection{Input Capture Mode}
-        Keep brief, not focus of lab
-        Basic theory and graphical example		
-        Simple use-cases: stopwatch, tracking motor speed using a click-wheel
-            will be using a fancy version of input capture mode (quadrature encoder mode) to track speed and direction of the motor in later labs.
-        Counter value saved in the capture/compare register (CRR)
+%        Keep brief, not focus of lab
+%        Basic theory and graphical example		
+%        Simple use-cases: stopwatch, tracking motor speed using a click-wheel
+%            will be using a fancy version of input capture mode (quadrature encoder mode) to track speed and direction of the motor in later labs.
+%        Counter value saved in the capture/compare register (CRR)
     
     \subsection{Output Compare Mode}
-        Output compare mode uses an extra control register CCR
-        The timer operates like normally with the counter and ARR but a capture/compare interrupt/event occurs whenever the timer counter reaches the value in the CCR.
-        
-        The capture/compare unit can directly modify the output of a pin on this compare event
-        What happens to the pin (set-high, set-low, toggle) depends on the mode in the control register. 
-        
-        (figure of edge-aligned toggle on match )
+%        Output compare mode uses an extra control register CCR
+%        The timer operates like normally with the counter and ARR but a capture/compare interrupt/event occurs whenever the timer counter reaches the value in the CCR.
+%        
+%        The capture/compare unit can directly modify the output of a pin on this compare event
+%        What happens to the pin (set-high, set-low, toggle) depends on the mode in the control register. 
+%        
+%        (figure of edge-aligned toggle on match )
         \begin{figure}[]
-            \centering\includegraphics[width=\textwidth]{ocomp_mode}
+            \centering\includegraphics[width=0.75\textwidth]{ocomp_mode}
             \caption{Output Compare mode with pin toggle on compare match.}
             \label{ocomp_mode}
         \end{figure}
     
-        The capture compare mode register can be changed on-the-fly, moving the event point. This is often used in PWM mode.
+%        The capture compare mode register can be changed on-the-fly, moving the event point. This is often used in PWM mode.
     
     \subsection{Pulse-Width Modulation (PWM) Mode}
-    What is PWM?
-    What is it used for? How does it approximate an analog signal?
-        low-pass filter
-        electronic, mechanical (motor or speaker), others (human eye)
-        
-    (figure of PWM representing sinewave)
+%    What is PWM?
+%    What is it used for? How does it approximate an analog signal?
+%        low-pass filter
+%        electronic, mechanical (motor or speaker), others (human eye)
+%        
+%    (figure of PWM representing sinewave)
     \begin{figure}[]
-        \centering\includegraphics[width=\textwidth]{pwm_sine}
+        \centering\includegraphics[width=0.75\textwidth]{pwm_sine}
         \caption{PWM approximation of an analog sine-wave.}
         \label{pwm_sine}
     \end{figure}
     
-    How the STM32F0 generates PWM (fancier form of output compare)
-    Perhaps in list mode where the registers involved are listed with their function?
-    (figure of edge-aligned mode/sawtooth with appropriate markings)
+%    How the STM32F0 generates PWM (fancier form of output compare)
+%    Perhaps in list mode where the registers involved are listed with their function?
+%    (figure of edge-aligned mode/sawtooth with appropriate markings)
      \begin{figure}[]
-        \centering\includegraphics[width=\textwidth]{pwm_pin}
+        \centering\includegraphics[width=0.75\textwidth]{pwm_pin}
         \caption{Edge-aligned PWM mode and output pin state.}
         \label{pwm_pin}
     \end{figure}
 
 \section{Configuring GPIO pins to Alternate Function Mode}
-    What is Alternate Function Mode?
-    Need to tell the GPIO hardware to allow the timer to directly control the pin output state
-    Connecting a pin to an internal peripheral of the device is called "Alternate Function Mode"
-    In the STM32F0s most peripherals are directly connected to specific sets of pins. 
-        While you can't assign an internal signal to an arbitrary pin, they do give you a few pin options to choose.
-        Most GPIO pins have multiple possible alternate functions, need to look up. 
-    
-    Use chip datasheet (Pinouts and pin descriptions section)
+%    What is Alternate Function Mode?
+%    Need to tell the GPIO hardware to allow the timer to directly control the pin output state
+%    Connecting a pin to an internal peripheral of the device is called "Alternate Function Mode"
+%    In the STM32F0s most peripherals are directly connected to specific sets of pins. 
+%        While you can't assign an internal signal to an arbitrary pin, they do give you a few pin options to choose.
+%        Most GPIO pins have multiple possible alternate functions, need to look up. 
+%    
+%    Use chip datasheet (Pinouts and pin descriptions section)
     
     \subsection{Finding Available Pins on a Device Package}
-    Using a 64-pin LQFP (LQFP64)
-    Table 13. STM32F072x8/xB pin definitions
-    Only have pins that have physical pin numbers under the LQFP64 column. Table lists pin assignments for all chip packages the STM32F072 device is produced in.
-    Alternate functions listed, will be talking about other columns of table in later labs.
-    
-    (marked Figure of table 13, package column highlighted, pin name and possible alternate functions)
+%    Using a 64-pin LQFP (LQFP64)
+%    Table 13. STM32F072x8/xB pin definitions
+%    Only have pins that have physical pin numbers under the LQFP64 column. Table lists pin assignments for all chip packages the STM32F072 device is produced in.
+%    Alternate functions listed, will be talking about other columns of table in later labs.
+%    
+%    (marked Figure of table 13, package column highlighted, pin name and possible alternate functions)
     \begin{figure}[]
         \centering\includegraphics[width=0.8\textwidth]{chip_pins}
         \caption{Subset of table 13 - STM32F072x8/xB Datasheet}
@@ -377,16 +336,16 @@ Timers are at their core simply a register the increments or decrements whenever
     \end{figure}
 
     \begin{example}[Finding Pins With an Alternate Function]
-            Example: Chose arbitrary alternate function for a peripheral and walk through the process of finding pins
+%            Example: Chose arbitrary alternate function for a peripheral and walk through the process of finding pins
     \end{example}
-    (add in section on how to graphically do this with stmcube later)
+%    (add in section on how to graphically do this with stmcube later)
     
     \subsection{Selecting an Alternate Function}
-    Demonstrate the AFR registers in the GPIO peripheral
-    Once have pins that can use the AF, need to find what specific AF number it is for that pin.
-    Use tables 14-19 in the chip datasheet
-    
-    (marked figure of table 14-19, pick a GPIO and an alternate function) 
+%    Demonstrate the AFR registers in the GPIO peripheral
+%    Once have pins that can use the AF, need to find what specific AF number it is for that pin.
+%    Use tables 14-19 in the chip datasheet
+%    
+%    (marked figure of table 14-19, pick a GPIO and an alternate function) 
     \begin{figure}[]
         \centering\includegraphics[width=\textwidth]{func_pins}
         \caption{Subset of table 15 - STM32F072x8/xB Datasheet}
@@ -394,7 +353,7 @@ Timers are at their core simply a register the increments or decrements whenever
     \end{figure}
    	
     \begin{example}[Determining an Alternate Function's Number] 
-         Example: Find AF number and select for pin in previous example.
+%         Example: Find AF number and select for pin in previous example.
     \end{example}
     
 \section{Lab Assignment:}

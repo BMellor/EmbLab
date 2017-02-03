@@ -96,11 +96,11 @@
 \section{Introduction to Timers}
 The last lab used the SysTick timer to generate a periodic interrupt. The SysTick is a simple peripheral with a 24-bit down-counting counter that triggers an interrupt as it reaches zero. The primary purpose of the SysTick timer is to generate a stable system ``tick'' or heartbeat/timing reference signal. 
 
-this heartbeat signal is used to signal the passage of a unit of time. Some common places where the SysTick is used is in the HAL delay libraries and the scheduler and context switcher of applications built upon real-time operating systems. 
+this heartbeat signal is used to signal the passage of a unit of time. Some common places where the SysTick is used is in the HAL delay libraries and in the context switcher of real-time operating systems. 
 
 Why is getting accurate timing so important? Truth is it's hard and inefficient to measure time simply by the processor without some sort of dedicated hardware like a timer. 
 
-Timers are at their core simply a register the increments or decrements whenever a trigger signal occurs. Upon this are built the capability to generate hardware interrupts, like the SysTick However the SysTick is the simplest of the on-board timer peripherals.
+Timers are at their core simply a register the increments or decrements whenever a trigger signal occurs. Upon this are built the capability to generate hardware interrupts, like the SysTick. However, the SysTick is the simplest of the on-board timer peripherals.
 
 %    Why have timer circuits?
 %        SysTick timer
@@ -152,25 +152,37 @@ Timers are at their core simply a register the increments or decrements whenever
     
 
 \section{Using the Timer Documentation}
-    The timer peripherals in the STM32F0 are complex, it isn't possible to document them in the lab manual
-    MUST get familiar with searching the peripheral reference manual
-    For these sections will be using the documentation on timers 2\&3 
-        They're not super simple timers, but not the advanced one either
-        Their documentation is 65 pages long... (and dense)
+    At this point the peripherals that the labs are going to be discussing are going to be reaching the level of complexity that the lab manuals are not going to be able to provide enough documentation to complete the lab assignments without additional reading in the datasheets and peripheral reference manual. 
     
-    Reference manual documentation goes in this format:
-        Basic information on what peripheral does
-        Details and architectural block diagrams
-        Documentation of the different modes
-        These usually have some specific background info
-        Summarized information on how to configure the mode
-            Gives generic steps, will need to carefully read the register documentation
-        Summarized information on data produced 
-            describe where produced data is written
-            Includes figures depicting operation
+    Instead the lab manual will provide an overview of the different modes of operation of the peripheral And provide some insight as to what registers are important in that mode. the assignment will provide meaningful steps to accomplish the end goal. 
+
+    In figure \ref{avaliable_timers} we discussed the characteristics of the available timers in the STM32F072. For the remainder of this lab manual we will be focusing on the documentation materials for TIM2 \& TIM3. 
     
-    This manual will document the purpose of the base registers as they are used in each mode
-        May also indicate groups of control bits that pertain to the configuration or operation 	
+    Timers 2 \& 3 are the more-advanced versions of the general purpose timers in the STM32F0. They have a nearly identical interface as the simpler timers, except that they feature additional configuration options and more output channels. By reading through the documentation of these timers, you should be able to move to one of the simpler devices without trouble in the assignment 
+    
+    \subsubsection{Organization of Peripheral Documentation}
+    The each section of the peripheral reference manual follows a similar organization when documenting a peripheral. 
+    
+    
+%##    The timer peripherals in the STM32F0 are complex, it isn't possible to document them in the lab manual
+%##    MUST get familiar with searching the peripheral reference manual
+%##    For these sections will be using the documentation on timers 2\&3 
+%##        They're not super simple timers, but not the advanced one either
+%        Their documentation is 65 pages long... (and dense)
+%    
+%    Reference manual documentation goes in this format:
+%        Basic information on what peripheral does
+%        Details and architectural block diagrams
+%        Documentation of the different modes
+%        These usually have some specific background info
+%        Summarized information on how to configure the mode
+%            Gives generic steps, will need to carefully read the register documentation
+%        Summarized information on data produced 
+%            describe where produced data is written
+%            Includes figures depicting operation
+%    
+%    This manual will document the purpose of the base registers as they are used in each mode
+%        May also indicate groups of control bits that pertain to the configuration or operation 	
 
 \section{Using Timers to Generate Interrupts and Events}
     These timer modes make use of the basic time-base unit of the timer. 

@@ -208,19 +208,45 @@ Timers are at their core simply a register the increments or decrements whenever
 %        May also indicate groups of control bits that pertain to the configuration or operation 	
 
 \section{Using Timers to Generate Interrupts and Events}
-    These timer modes make use of the basic time-base unit of the timer. 
-    This portion does what you'd expect from the timer (it counts)
+
+    One of the most basic uses of a timer is to generate periodic interrupts. Unlike the SysTick timer which is typically configured once and to a specific base unit of time, the peripheral timers are available to use for arbitrary timing periods and can be used as event counters when using alternate signals as clock sources. Because their input prescaler can be used to divide the input clock by arbitrary integer values, it is possible to generate very long timer periods or match strange timing requirements that aren't multiples of the system clock. Section 18.3 \textit{TIM2 and TIM3 Functional Description} of the peripheral reference manual documents the following in greater detail. 
+
+    There are three registers that form the basic operations of a timer peripheral. 
+    \subsubsection{TIMx\_CNT -- Timer Counter Register}
+    The CNT register holds the current value of the counter in the timer. Its size depends on the counter resolution (16/32-bit) indicated in the timer's documentation. Athough this register is automatically updated as the timer operates, it is possible to manually read and edit its value. The CNT register can be read within the main application loop as a method of counting time, or written in order to modify the timer's operation. 
+    \subsubsection{TIMx\_PSC -- Timer Prescaler Register}
+    The PSC register is used to divide the input clock frequency to the timer. It's value is 0-indexed meaning that a value of 0 in the PSC register divides the clock source by 1. (no frequency scaling) Likewise a value of 1 in the PSC register divides the clock source by 2 and causes the timer to count at half the clock frequency. The PSC can divide the input clock by any integer value that will fit in its 16-bit width. 
+    \subsubsection{TIMx\_ARR -- Timer Auto-Reload Register}
+    Although a timer has a physical hardware size to its counter register, it is possible to set an artificial top limit. The value in the ARR register is the trigger point where the timer resets and begins to count a new period. The actual behavior of the timer depends on its counting mode and will be discussed more in a later section. 
+%    These timer modes make use of the basic time-base unit of the timer. 
+%    This portion does what you'd expect from the timer (it counts)
     
     \subsection{Basic Timer Operation}
     
-    Basic registers used in these modes (not including control/setup registers)
-        timer counter
-        prescaler 
-        auto-reload
+    There are three different counting modes that the timers can operate under: up, down, and center-aligned (up/down). Note that all but three of the hardware timers in the STM32F072 are only upcounters. Figure \ref{count_modes} shows a graphical representation of the counting modes. 
     
-    up, down, up/down (center-aligned) counting modes
+    \begin{itemize}
+        \item \textbf{Upcounting Mode} --  In upcounting mode, the timer starts at 0 and counts upwards to the auto-reload value in the TIMx\_ARR register. After reaching the ARR limit the counter resets back to 0. 
+        \item \textbf{Downcounting Mode} -- In downcounting mode, the timer starts at the auto-reload value and counts downwards until reaching 0. After reaching the lower limit it resets back to the ARR value.
+        \item \textbf{Center-aligned Mode (up/down counting)} -- In center-aligned mode, the timer starts by counting upward from 0 until the auto-reload value. Once the upper limit is reached, the counting direction reverses and the timer counts downwards towards zero.
+    \end{itemize}
+
     
-    (combination figure showing sawtooth/triangle waves for counter value)
+    
+%   % Basic registers used in these modes (not including control/setup registers)
+%%        timer counter
+%%        prescaler 
+%%        auto-reload
+%        
+%        control registers   ################### Suggest what each register does, for example enable timer in CR1
+%        CR1 \& CR2
+%        DIER
+%        SR
+%        
+%    
+%    up, down, up/down (center-aligned) counting modes
+    
+    %(combination figure showing sawtooth/triangle waves for counter value)
     \begin{figure}[]
         \centering\includegraphics[width=\textwidth]{count_modes}
         \caption{Timer counting modes and update interrupts}
@@ -228,11 +254,31 @@ Timers are at their core simply a register the increments or decrements whenever
     \end{figure}
     
     \subsubsection{Basic Timer Interrupts}
-    UEV - Update event, occurs when the counter value is reset by hardware
-        this can happen at counter overflow/underflow
-        whenever the timer is reset to 0 because it reached the ARR value
-        whenever the timer changes direction (center aligned mode)
-    Other interrupts are generated by the capture/compare system
+    
+    Regardless of the counting mode used, whenever the timer reaches a limit and is reset to a new value is called an \textit{Update Event} (UEV). Additionally, center-aligned counters can be configured to trigger update events whenever the timer changes to a specific direction. 
+    
+    The UEV is one of the possible interrupt sources in a peripheral timer. Typically this interrupt source is used to generate periodic interrupts, but with a very flexible and potentially long duration period. 
+    
+    
+    \subsubsection{Configuring Basic Timer Settings}
+    In addition to the three main timer registers, there are four control registers used to set timer parameters. These are used to enable the timer, set the counting direction, enable the UEV interrupt, and clear the pending interrupt flag in a handler. 
+    
+    \begin{itemize}
+        \item \textbf{TIMx\_CR1 \& CR2} -- Control Registers 1 \& 2 hold the crucial configuration options of the timer. For example, before the timer can operate it must be enabled using the \textit{Counter Enable} (CEN) bit. 
+        \item\textbf{TIMx\_DIER} -- The DMA/Interrupt Enable Register controls the possible interrupt sources in the timer.
+        \item\textbf{TIMx\_SR} -- The Status Register contains pending flags that must be cleared in interrupt handlers.
+    \end{itemize}
+    %control registers   ################### Suggest what each register does, for example enable timer in CR1
+    %        CR1 \& CR2
+    %        DIER
+    %        SR
+    
+    
+%    UEV - Update event, occurs when the counter value is reset by hardware
+%        this can happen at counter overflow/underflow
+%        whenever the timer is reset to 0 because it reached the ARR value
+%        whenever the timer changes direction (center aligned mode)
+%    Other interrupts are generated by the capture/compare system
     
     \subsection{Selecting Timer Frequency and Interrupt Period}	
     choosing a frequency the timer runs at (keep BRIEF)

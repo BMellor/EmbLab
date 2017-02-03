@@ -112,8 +112,9 @@ Timers are at their core simply a register the increments or decrements whenever
 %        Means you can measure time to schedule operations
     
     \subsection{Systick vs Peripheral Timers}
-     The SysTick exists within the actual ARM core 
-    
+     Because the SysTick peripheral has a very simple purpose, to generate periodic interrupts, it doesn't offer any features that make it useful for more complicated tasks. 
+     
+     Unlike the SysTick, peripheral timers within the STM32F0 are designed to be useful in whatever tasks the user application can come up with. Because of this they are fairly complicated devices with a large variety of features. Figure \ref{block_timers} shows the block diagram for general-purpose timers 2 \& 3 in the STM32F072.     
 %        The SysTick is very limited, mainly used for just a timebase (Delay libraries, RTOS scheduler etc...)
 %        The peripheral timers of the STM32F0 have more advanced capabilities than generating simple interrupts when they reload their value. 
 %        
@@ -124,32 +125,54 @@ Timers are at their core simply a register the increments or decrements whenever
             \label{block_timers}
         \end{figure}
         
-        Here are a few basic features:
-            Selectable and prescalable clock sources
-                The timers have built-in frequency dividers (prescaler) to reduce the input clock signal so they can count at more arbitrary rates. 
-            Generate interrupts at multiple conditions 
-                Can generate interrupts on top, bottom or even arbitrary counter values. 
-                These are selected by the different modes of operation that the timer can be placed into. 
-        Ability to directly modify some GPIO pin outputs without requiring an interrupt. Used mainly for waveform generation. (capture-compare, PWM)
-        Can directly read some GPIO input pins to measure the time between changes. (input capture)	
+        The three main features that peripheral timers offer over simpler devices such as the SysTick are:
+        \begin{enumerate}
+            \item \textbf{Selectable and Prescalable Clock Sources} -- Many peripheral timers can use multiple signals as clock sources and can divide the input frequency by arbitrary integer values. 
+            \item \textbf{Generate Interrupts at Multiple Conditions} -- Many Peripheral timers can generate interrupts at arbitrary counter values.
+            \item \textbf{Directly Modify GPIO Pins} -- Many peripheral timers can directly set or capture GPIO pin states to measure or generate digital signals.  
+        \end{enumerate}
+        
+%        Here are a few basic features:
+%            Selectable and prescalable clock sources
+%                The timers have built-in frequency dividers (prescaler) to reduce the input clock signal so they can count at more arbitrary rates. 
+%            Generate interrupts at multiple conditions 
+%                Can generate interrupts on top, bottom or even arbitrary counter values. 
+%                These are selected by the different modes of operation that the timer can be placed into. 
+%        Ability to directly modify some GPIO pin outputs without requiring an interrupt. Used mainly for waveform generation. (capture-compare, PWM)
+%        Can directly read some GPIO input pins to measure the time between changes. (input capture)	
     
     \subsection{Timers in the STM32F072}
-        (Show table of timers in the STM32F072)
+        %(Show table of timers in the STM32F072)
         \begin{figure}[]
             \centering\includegraphics[width=\textwidth]{avaliable_timers}
             \caption{STM32F072RB hardware timers}
             \label{avaliable_timers}
         \end{figure}
         
-        Discuss basic features: (BRIEFLY!)
-            Timer Type
-            Counter resolution/size
-            Counter Type
-            Prescaler
-            DMA Request
-            Capture/compare channels
-            Complimentary outputs
-    
+        
+        Figure \ref{avaliable_timers} shows the timers available in the STM32F072 chip we are using. When deciding on a timer to use for an application, it is helpful to understand their capabilities and if they are suitiable for the task. A brief breakdown of the information in figure \ref{avaliable_timers} is as follows:
+        
+        \begin{itemize}
+            \item \textbf{Timer Type} -- There are multiple classes of timers within the STM32F0. These serve as indicators of the appropriate uses for the peripheral. An advanced control timer offers additional and more-complex operating modes than a general-purpose one. 
+            \item \textbf{Timer} -- These abbreviated names are used to identify between timers in the documentation. They are also the defined names for the timer structures in the supporting peripheral header files. 
+            \item \textbf{Counter Resolution} -- This indicates how large the hardware counter within the timer is. A 16-bit timer can only count to $2^{16}$ values before overflowing and wrapping back to zero. 
+            \item \textbf{Counter Type} -- Typically the hardware counter in a timer counts upwards with each clock cycle. However, more advanced timers can also be set to count downwards from a value, or to automatically change direction whenever reaching the limit values. 
+            \item \textbf{Prescaler Factor} -- The prescale factor allows the timer to pre-divide the input clock to a slower frequency. The timers within the STM32F0 have the ability to divide the input clock by arbitrary integer factors between 1 and $2^{16}$.
+            \item \textbf{DMA Request Generation} -- Many peripherals have the ability to move data between peripheral registers and system memory without using the main processor. This process is called direct memory access (DMA).
+            \item \textbf{Capture/Compare Channels} -- Most timers have the ability to directly modify GPIO pins without using the GPIO peripheral. The capture/compare system in a timer is used to generate and measure digital signals on an external pin. 
+            \item \textbf{Complimentary Outputs} -- Some capture/compare circuity has the ability to generate complimentary or opposite outputs on GPIO pins. This generates an effect similar to differential signaling 
+        \end{itemize}
+        
+        
+%        Discuss basic features: (BRIEFLY!)
+%            Timer Type
+%            Counter resolution/size
+%            Counter Type
+%            Prescaler
+%            DMA Request
+%            Capture/compare channels
+%            Complimentary outputs
+%    
 
 \section{Using the Timer Documentation}
     At this point the peripherals that the labs are going to be discussing are going to be reaching the level of complexity that the lab manuals are not going to be able to provide enough documentation to complete the lab assignments without additional reading in the datasheets and peripheral reference manual. 

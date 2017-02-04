@@ -96,12 +96,11 @@
 \chapter{Timers, PWM and GPIO Alternate Functions}
 
 \section{Introduction to Timers}
-The last lab used the SysTick timer to generate a periodic interrupt. The SysTick is a simple peripheral with a 24-bit down-counting counter that triggers an interrupt as it reaches zero. The primary purpose of the SysTick timer is to generate a stable system ``tick'' or heartbeat/timing reference signal. 
+The last lab used the SysTick timer to generate a periodic interrupt. The SysTick is a simple peripheral with a 24-bit down-counting register that triggers an interrupt as it reaches zero. The primary purpose of the SysTick timer is to generate a stable system ``tick'' or heartbeat/timing reference signal. 
 
 This heartbeat signal is used to indicate the passage of a unit of time. Some common places where the SysTick is used is in the HAL delay libraries and in the context switcher of real-time operating systems. 
 
-% REVISE NOW!!!
-Why is getting accurate timing so important? Truth is it's hard and inefficient to measure time simply by the processor without some sort of dedicated hardware like a timer. 
+An interesting question to ask is why accurate timing so important. Although a processor moves along an applications code in units of the clock cycle, it is difficult and inefficient to measure time simply by counting instruction cycles without dedicated hardware such as a timer. The requirement for accurate timing stems from the fact that many embedded systems require specific timings or schedules while interacting with the physical world.
 
 Timers are at their core simply a register the increments or decrements whenever a trigger signal occurs. Upon this are built the capability to generate hardware interrupts, like the SysTick. However, the SysTick is the simplest of the onboard timer peripherals.
     
@@ -144,21 +143,42 @@ Timers are at their core simply a register the increments or decrements whenever
             \item \textbf{Prescaler Factor} -- The prescale factor allows the timer to pre-divide the input clock to a slower frequency. The timers within the STM32F0 have the ability to divide the input clock by arbitrary integer factors between 1 and $2^{16}$.
             \item \textbf{DMA Request Generation} -- Many peripherals have the ability to move data between peripheral registers and system memory without using the processor. This process is called direct memory access (DMA).
             \item \textbf{Capture/Compare Channels} -- Most timers have the ability to modify GPIO pins without using the GPIO peripheral directly. The capture/compare system in a timer is used to generate and measure digital signals on an external pin. 
-            \item \textbf{Complimentary Outputs} -- The capture/compare circuity in some timers can generate complementary or opposing outputs on two GPIO pins. 
+            \item \textbf{Complementary Outputs} -- The capture/compare circuity in some timers can generate complementary or opposing outputs on two GPIO pins. 
         \end{itemize}
 
 \section{Using the Timer Documentation}
-    At this point, the peripherals that the labs are going to be discussing are going to be reaching the level of complexity that the lab manuals are not going to be able to provide enough documentation to complete the lab assignments without additional reading in the datasheets and peripheral reference manual. 
+    At this point, the peripherals that the labs are going to be discussing are going to be reaching the level of complexity that the lab manuals are not going to be able to provide enough information to complete the lab assignments without additional reading in the datasheets and peripheral reference manual. 
     
-    Instead, the lab manual will provide an overview of the different modes of operation of the peripheral And provide some insight as to what registers are relevant in that mode. The assignment will provide meaningful steps to accomplish the end goal. 
+    Instead, this lab manual will provide an overview of the different modes of operation and their relevant registers within the peripheral.
 
     In figure \ref{avaliable_timers} we discussed the characteristics of the available timers in the STM32F072. For the remainder of this lab manual, we will be focusing on the documentation materials for TIM2 \& TIM3. 
     
     Timers 2 \& 3 are the more-advanced versions of the general purpose timers in the STM32F0. Although not as complex as the advanced control timer 1, they feature additional configuration options and more output channels. Because these have a nearly identical interface as the simpler timers, by reading through their documentation, you should be able to move to one of the simpler devices without trouble in the assignment. 
     
     \subsubsection{Organization of Peripheral Documentation}
-    The each section of the peripheral reference manual follows a similar organization when documenting a peripheral. 
+    The each section of the peripheral reference manual follows a similar organization regardless of the peripheral documented. These begin with a brief introduction of the purpose and features of the peripheral, followed by a block diagram showing the basic architectural design of the hardware. 
     
+    The following section titled the \textit{Functional Description} is the most important piece of material that you will use when figuring out a new peripheral. The functional description section of the manual provides the following information:
+    
+    \begin{itemize}
+        \item Explanation of the purpose of each operating mode 
+        \item Basic theory of operation 
+        \item Relevant registers and configuration options 
+        \item Summarized configuration information
+        \begin{itemize}
+            \item Typically provides generic steps for peripheral configuration. 
+            \item These provide a foundation when searching the register documentation for additional details. 
+        \end{itemize}
+        \item Summary of the output data produced
+        \begin{itemize}
+            \item Indicates where data is written for application use.
+            \item Typically includes figures and graphs depicting peripheral operation.
+        \end{itemize}
+    \end{itemize}
+
+    After the functional description, the reference manual documents each of the peripheral's registers in detail. Assuming that you have read and understand the information within the functional description section, you will spend the majority of your time using the register maps and bit descriptions to configure the peripheral into the desired behavior. 
+
+%    The following sections will attempt to provide a summarized version of the important information in the functional description for the timer 2 \& 3 peripherals. 
 %        Their documentation is 65 pages long... (and dense)
 %    
 %    Reference manual documentation goes in this format:
@@ -223,7 +243,7 @@ Timers are at their core simply a register the increments or decrements whenever
     \subsection{Selecting Timer Frequency and Interrupt Period}	
     The peripheral timers in the STM32F0 have the ability to use a few different sources for their clock input. 
     \begin{itemize}
-        \item\textbf{Internal Peripheral Clock} -- This is the most commonly used clock source and is determined by the clock distribution system. In our toolchain, this frequency is configured by the STMCubeMX program during project generation. 
+        \item\textbf{Internal Peripheral Clock} -- This is the most commonly used clock source and is determined by the clock distribution system. In our toolchain, this frequency is configured by default to be 8Mhz by the STMCubeMX program during project generation. 
         \item\textbf{External Clock Pin} -- Many timers have the ability to use an external clock source provided by an input pin. This source may have a unique frequency or higher accuracy than the processor clock.
         \item\textbf{Internal Trigger Inputs} -- Some peripherals can generate trigger events that are visible throughout the device. This mode is used to chain timers together or counting events produced by other types of peripherals.
     \end{itemize}
@@ -410,24 +430,33 @@ This system allows the user to have a few different options when selecting pins 
 %    (add in section on how to graphically do this with stmcube later)
     
     \subsection{Selecting an Alternate Function}
-    Although a pin may have the capability to connect to the 
+    Although a pin may have multiple alternate functions, it can only be used for one of them at a given time. Within the GPIO peripherals there are two registers that control what functions are connected to each pin. These are the \textit{Alternate Function High Register} (AFRH) and the  \textit{Alternate Function Low Register} (AFRL). 
+    
+    Within these registers are regions of bits that select alternate functions by their alternate function number for the pin. These function numbers are documented in tables 14-19 of the \textit{Pinouts and Pin Descriptions} section in the device datasheet. 
 %    Demonstrate the AFR registers in the GPIO peripheral
 %    Once have pins that can use the AF, need to find what specific AF number it is for that pin.
 %    Use tables 14-19 in the chip datasheet
 %    
 %    (marked figure of table 14-19, pick a GPIO and an alternate function) 
-    \begin{figure}[]
-        \centering\includegraphics[width=\textwidth]{func_pins}
-        \caption{Subset of table 15 - STM32F072x8/xB Datasheet}
-        \label{func_pins}
-    \end{figure}
+
    	
     \begin{example}[Determining an Alternate Function's Number] 
+Figure \ref{func_pins} shows a portion of table 15 in the pinouts and pin descriptions section of the device datasheet. This table lists the alternate functions for the GPIOB pins of the device. Continuing from the previous example, we can begin by finding the row representing PB1, the pin chosen with desired alternate function found in Table 13. 
+
+The row representing PB1 has been highlighted in green. Looking across the columns of the row shows the different alternate functions that were also listed in Table 13. Finding the desired alternate function, circled in blue, we can look up to the column header and see the alternate function number circled in red is ``AF1.'' 
+
+By programming the matching bit pattern documented in the AFR register map for ``AF1'' into the bit region representing PB1 in the GPIOB alternate function registers we can select the capture/compare channel 4 of timer 3 to output on that pin.  
 %         Example: Find AF number and select for pin in previous example.
     \end{example}
+
+    \begin{figure}[]
+    \centering\includegraphics[width=\textwidth]{func_pins}
+    \caption{Subset of table 15 - STM32F072x8/xB Datasheet}
+    \label{func_pins}
+\end{figure}
     
 \section{Lab Assignment:}
-
+This manual will be updated with the lab assignment after additional review and testing. 
 
 
 \end{document}

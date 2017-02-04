@@ -1,6 +1,29 @@
 Pre-lab Questions:
 ----------------------------
 
+List two things you can learn from a peripheral's functional description in the peripheral reference manual? 
+
+What is the title of the first sub-section in the functional description of timers 2 and 3? (Not mentioned in lab manual, look it up!)
+
+What is the purpose of the Prescaler (PSC) register?
+
+What is the purpose of the Auto-Reload (ARR) register?
+
+What is the purpose of the Capture/Compare (CCRx) register while the timer is operating in Output Compare mode? 
+
+What does the duty-cycle of a PWM signal represent?
+
+What is the purpose of the Alternate Function mode for a GPIO pin? 
+
+In what document can you find the documentation for what GPIO pins have which alternate functions?
+
+
+
+
+
 
 Post-lab Questions:
 ----------------------------
+Have them do a PSC and ARR for a given system clock and target period.
+
+ 

@@ -181,11 +181,11 @@ Timers are at their core simply a register the increments or decrements whenever
     One of the most basic uses of a timer is to generate periodic interrupts. Unlike the SysTick timer which is typically configured once and to a specific base unit of time, the peripheral timers are available to use for arbitrary timing periods and can be used as event counters when using alternate signals as clock sources. Because their input prescaler can be used to divide the input clock by arbitrary integer values, it is possible to generate very long timer periods or match strange timing requirements that aren't multiples of the system clock. Section 18.3 \textit{TIM2 and TIM3 Functional Description} of the peripheral reference manual documents the following sections in greater detail. 
 
     There are three registers that form the basic operations of a timer peripheral. 
-    \subsubsection{TIMx\_CNT -- Timer Counter Register}
+    \subsubsection{Timer Counter Register (CNT)}
     The CNT register holds the current value of the counter in the timer. Its size depends on the counter resolution (16/32-bit) indicated in the timer's documentation. Athough this register is automatically updated as the timer operates, it is possible to manually read and edit its value. The CNT register can be read within the main application loop as a method of counting time, or written in order to modify the timer's operation. 
-    \subsubsection{TIMx\_PSC -- Timer Prescaler Register}
+    \subsubsection{Timer Prescaler Register (PSC)}
     The PSC register is used to divide the input clock frequency to the timer. It's value is 0-indexed meaning that a value of 0 in the PSC register divides the clock source by 1. (no frequency scaling) Likewise a value of 1 in the PSC register divides the clock source by 2 and causes the timer to count at half the clock frequency. The PSC can divide the input clock by any integer value that will fit in its 16-bit width. 
-    \subsubsection{TIMx\_ARR -- Timer Auto-Reload Register}
+    \subsubsection{Timer Auto-Reload Register (ARR)}
     Although a timer has a physical hardware size to its counter register, it is possible to set an artificial top limit. The value in the ARR register is the trigger point where the timer resets and begins to count a new period. The actual behavior of the timer depends on its counting mode and will be discussed more in a later section. 
 
     
@@ -194,7 +194,7 @@ Timers are at their core simply a register the increments or decrements whenever
     There are three different counting modes that the timers can operate under: up, down, and center-aligned (up/down). Note that all but three of the hardware timers in the STM32F072 are only upcounters. Figure \ref{count_modes} shows a graphical representation of the counting modes. 
     
     \begin{itemize}
-        \item \textbf{Upcounting Mode} --  In upcounting mode, the timer starts at 0 and counts upwards to the auto-reload value in the TIMx\_ARR register. After reaching the ARR limit the counter resets back to 0. 
+        \item \textbf{Upcounting Mode} --  In upcounting mode, the timer starts at 0 and counts upwards to the auto-reload value in the ARR register. After reaching the ARR limit the counter resets back to 0. 
         \item \textbf{Downcounting Mode} -- In downcounting mode, the timer starts at the auto-reload value and counts downwards until reaching 0. After reaching the lower limit it resets back to the ARR value.
         \item \textbf{Center-aligned Mode (up/down counting)} -- In center-aligned mode, the timer starts by counting upward from 0 until the auto-reload value. Once the upper limit is reached, the counting direction reverses and the timer counts downwards towards zero.
     \end{itemize}
@@ -216,9 +216,9 @@ Timers are at their core simply a register the increments or decrements whenever
     In addition to the three main timer registers, there are four control registers used to set timer parameters. These are used to enable the timer, set the counting direction, enable the UEV interrupt, and clear the pending interrupt flag in a handler. 
     
     \begin{itemize}
-        \item \textbf{TIMx\_CR1 \& CR2} -- Control Registers 1 \& 2 hold the crucial configuration options of the timer. For example, before the timer can operate it must be enabled using the \textit{Counter Enable} (CEN) bit. 
-        \item\textbf{TIMx\_DIER} -- The DMA/Interrupt Enable Register controls the possible interrupt sources in the timer.
-        \item\textbf{TIMx\_SR} -- The Status Register contains pending flags that must be cleared in interrupt handlers.
+        \item \textbf{Control Registers 1 \& 2 (CR1 \& CR2)} -- These hold the crucial configuration options of the timer. For example, before the timer can operate it must be enabled using the \textit{Counter Enable} (CEN) bit. 
+        \item\textbf{DMA/Interrupt Enable Register (DIER)} -- Controls the possible interrupt sources in the timer.
+        \item\textbf{Status Register (SR)} -- Contains pending flags that must be cleared in interrupt handlers.
     \end{itemize}
 
     \subsection{Selecting Timer Frequency and Interrupt Period}	
@@ -262,12 +262,27 @@ Timers are at their core simply a register the increments or decrements whenever
     
 
 \section{Using Timers to Generate or Measure Signals}
+The basic modes of operation in a timer allow for a very flexible method of generating interrupts by modifying the timer's frequency and top value. However, the timers in the STM32F0 have the additional capability of generating and measuring physical waveforms by directly interfacing with GPIO pins. These features are made possible by the Capture/Compare Unit in the timer. 
+
+When configured in a capture/compare mode, the timer has a two additional registers with important functions.  In figure \ref{avaliable_timers} one of the columns indicated how many capture/compare channels were present within each timer. Each capture/compare channel functions independently but has an identical interface with its own set of registers.   
+\begin{itemize}
+    \item \textbf{Capture/Compare Registers (CCRx)} -- This register hold capture/compare data. Its specific use depends on the selected mode.
+    \item \textbf{Capture/Compare Mode Registers (CCMRx)} -- Contains additional options to select between specific capture/compare modes and their operation.
+\end{itemize}
+
+The three basic modes that the capture/compare channels can be configured into are: input capture mode, output compare mode, and pulse-width modulation mode. Athough these modes are primarily intended to interface with their associated GPIO pins, they all can generate interrupts on their respective trigger conditions. 
+
 %    These modes all use the capture/compare circuity of the timer
 %    Brief overview of the capture/compare unit
 %    
 %    The mode of operation of the capture/compare unit is set by the 3 capture/compare mode registers. (CCMR1-3)				
     
     \subsection{Input Capture Mode}
+    When configured into input capture mode, a capture/compare channel will latch the current value of the timer's counter into the appropriate CCRx register whenever a connected external GPIO pin changes. This mode allows very accurate measurement of the time elapsed between changes on the pin. 
+    
+    Similar to the EXTI, the input capture hardware can be set to trigger on either the rising or falling edges of a signal. However, the input capture system has a configurable digital filter which can be used to remove glitches and other noise from the signal. The primary purpose of the input capture mode is to measure precise timing-based signals such as those from a single-wire serial bus or a motor encoder. 
+    
+    Although the assignments in this section will not require you to use the input capture mode of a timer, we will be using an advanced mode of the input capture system to interface with the quadrature encoder of a DC motor during a later lab. 
 %        Keep brief, not focus of lab
 %        Basic theory and graphical example		
 %        Simple use-cases: stopwatch, tracking motor speed using a click-wheel
@@ -275,6 +290,10 @@ Timers are at their core simply a register the increments or decrements whenever
 %        Counter value saved in the capture/compare register (CRR)
     
     \subsection{Output Compare Mode}
+        The output compare mode directly modifies the output of a GPIO pin whenever the timers counter matches the value stored in the CCRx register. Depending on the configuration, an output compare channel can set, clear or toggle its pin on a counter match. 
+        
+        By using the output compare mode, it is possible to create arbitrary digital waveforms on the output. Typically, the ARR register is set to provide a constant period to the timer and the user's application produces the desired output by modifying the CCRx register while the timer is running. Figure \ref{ocomp_mode} shows an up-counting timer toggling an output compare pin, on every match of the CCRx register. 
+        
 %        Output compare mode uses an extra control register CCR
 %        The timer operates like normally with the counter and ARR but a capture/compare interrupt/event occurs whenever the timer counter reaches the value in the CCR.
 %        
@@ -291,6 +310,17 @@ Timers are at their core simply a register the increments or decrements whenever
 %        The capture compare mode register can be changed on-the-fly, moving the event point. This is often used in PWM mode.
     
     \subsection{Pulse-Width Modulation (PWM) Mode}
+    The pulse-width modulation mode of the capture/compare system is really a slightly more advanced form of the output compare mode. However, it's helpful to first discuss pulse-width modulation (PWM) and it's uses. 
+    
+    \subsubsection{About Pulse-Width Modulation}
+    PWM is a method of approximating an analog signal using only digital hardware. It operates by using a high-frequency rectangular-wave signal where every period is a ratio of on and off time. This ratio of on/off timing is known as the \textit{duty-cycle} and represents an analog voltage ranging between the low and high voltages of the digital signal. 
+    
+    For example, a period of the rectangular wave with a 50\% duty cycle would spend half the period at the high (on) output voltage and the other half at the low (off). A period with 0\% duty cycle will remain low for the entire duration and one with a 100\% duty cycle will remain high. It is possible to see how the duty cycle of a PWM signal represents an analog voltage by considering what the average voltage of the digital signal was over the entire period. A digital waveform that was high (on) for half the time and off for the rest would average to one-half the original voltage.  
+    
+    Naturally the concept of PWM doesn't make sense at low frequencies, it would just appear as a series of different length flashes. However at high frequencies, many physical systems can't respond quick enough to shut-off or turn-on with each output transition. This is the basis of mechanical and electrical low-pass filters which average or smooth out the high-frequency transitions of the PWM signal into an approximated analog signal.
+    
+    PWM is used for a variety of purposes. A few common examples are audio, light dimming, and motor speed control. Figure \ref{pwm_sine} shows how an analog sine-wave is approximated by a digital PWM signal. 
+    
 %    What is PWM?
 %    What is it used for? How does it approximate an analog signal?
 %        low-pass filter
@@ -302,6 +332,12 @@ Timers are at their core simply a register the increments or decrements whenever
         \caption{PWM approximation of an analog sine-wave.}
         \label{pwm_sine}
     \end{figure}
+    
+    \subsubsection{Operation of Capture/Compare PWM Mode}
+    The PWM mode operates almost exactly to the output compare mode of the timer. The difference is that the output pin state is also modified whenever the timer counter resets to begin a new period. There are different modes of PWM that the capture/compare system can generate. Figure \ref{pwm_pin} demonstrates one of the possible PWM modes. In the mode shown in the figure, the output pin begins the PWM period at a low state and is set high once the timer's counter matches the CCRx register. This output is set low again once the next period starts and the overall ratio of on/off is set by the location of the CCRx value in comparison to the ARR register. 
+    
+    The important ting to note about PWM is that the signal has both a duty-cycle and a frequency. The frequency of the PWM is set by the timer's frequency and the ARR register. The duty-cycle is set by the ratio of the CCRx and ARR registers. Typically the frequency of the PWM signal is irrelevant to the approximated analog voltage, however it must remain high enough such that the physical low-pass filter smooths out the transitions. 
+    
     
 %    How the STM32F0 generates PWM (fancier form of output compare)
 %    Perhaps in list mode where the registers involved are listed with their function?
@@ -317,6 +353,7 @@ Timers are at their core simply a register the increments or decrements whenever
 %    Need to tell the GPIO hardware to allow the timer to directly control the pin output state
 %    Connecting a pin to an internal peripheral of the device is called "Alternate Function Mode"
 %    In the STM32F0s most peripherals are directly connected to specific sets of pins. 
+%        Not like the EXTI which has the SYSCFG muxes to everywhere
 %        While you can't assign an internal signal to an arbitrary pin, they do give you a few pin options to choose.
 %        Most GPIO pins have multiple possible alternate functions, need to look up. 
 %    

@@ -19,19 +19,21 @@ In what document can you find the documentation for what GPIO pins have which al
 
 Post-lab Questions:
 ----------------------------
-Have them do a PSC and ARR for a given system clock and target period. (hard do non-integer)
 
-Find a random alternate function (must be on LQFP64)
-	need pin name, pin number on LQFP64, and alternate function number
+Using a timer clock source of 8 MHz, calculate PSC and ARR values to get a 60 Hz interrupt.
+	Note that this is tricky because 60 Hz can't achieved exactly. You will have to think about the process and try to minimize the error. There are multiple combinations of PSC and ARR values that are acceptable answers. 
+	
+Look through the Table 13 "STM32F072x8/xB pin definitions" in the chip datasheet and list all pins that can have the timer 3 capture/compare channel 1 alternate function.
+
+	If the pin is featured on the LQFP64 package that we are using, list the alternate function number that you would use to select it.
+ 	
 
 Measured value of timer UEV interrupt period from first experiment
 
-List the ARR and PSC values used for the second experiment
-
-	Describe what happened to the duty-cycle as the CCR value increased in PWM mode XXX
+Describe what happened to the duty-cycle as the CCR value increased in PWM mode 1
 	
-	Describe what happened to the duty-cycle as the CCR value increased in PWM mode YYY
+Describe what happened to the duty-cycle as the CCR value increased in PWM mode 2
 	
-	Include a logic analyzer screenshot of one PWM capture (doesn't matter which) 
+Include a logic analyzer screenshot of one PWM capture (doesn't matter which) 
 	
 What PWM mode is shown in figure 4.6 of the lab manual? (PWM mode 1 or 2)

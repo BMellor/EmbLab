@@ -346,9 +346,9 @@ The three basic modes that the capture/compare channels can be configured into a
 In normal operating conditions each GPIO peripheral controls the output state of its pins. Because of this, how does another peripheral such as a timer modify a pin's state? The answer lies within one of the four available pin modes in the GPIO MODER register. In the first lab we used the Input and Output modes of a GPIO pin. However there are two others that we haven't yet discussed. These are the Analog and Alternate Function modes. Allowing a pin to connect directly to internal peripherals of the STM32F0 is the purpose of the alternate function mode. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Unlike the EXTI which has the SYSCFG multiplexers, peripherals like the timers do not have access to arbitrary pins. Instead, internal signals are hardwired to a limited number of pins scattered around the chip. Many GPIO pins have multiple alternate functions from a variety of peripherals. However, only a single alternate function can be enabled on a pin at a time.
+Unlike the EXTI which has the SYSCFG multiplexers, peripherals such as the timers do not have access to arbitrary pins. Instead, the peripheral's internal signals are hardwired only to a handful of pins scattered around the chip. 
 
-This system allows the user to have a few different options when selecting pins that connect to a peripheral. Because these pins have multiple alternate functions, they are shared across multiple peripherals. When using many peripherals you many need to carefully plan the pins used to ensure that all peripherals can reach one of their limited output pins.  
+The GPIO alternate function system allows the user to have a few different options when selecting pins for a peripheral. Because there are a large number of possible peripheral signals in relation to the number of pins, many pins have multiple alternate functions shared across multiple peripherals. Although a pin may have multiple functions, only a single one can be selected at a time. When using many peripherals in an application you may need to carefully plan the pins used to ensure that all of them can reach one of their limited output pins.  
 
 %    What is Alternate Function Mode?
 %    Need to tell the GPIO hardware to allow the timer to directly control the pin output state
@@ -362,28 +362,28 @@ This system allows the user to have a few different options when selecting pins 
     
     \subsection{Finding Available Pins on a Device Package}
     
-    Alternate function assignments are specific to the STM32F0 device used. This means that the information on pin alternate functions is found within the \textit{device datasheet} and not the peripheral reference manual.
+    Alternate function assignments are specific to the STM32F0 device used. This means that the information on pin alternate functions is found within the device datasheet and not the peripheral reference manual.
     
-    Open the STM32F072xB datasheet and navigate to section 4 \textit{Pinouts and Pin Descriptions}. This section of the datasheet provides documentation on all of the chip packages available for the device. It also provides tables with pinout details, including alternate functions.
+    Open the STM32F072xB datasheet and navigate to Section 4 \textit{Pinouts and Pin Descriptions}. This section provides documentation on all of the chip packages available for the device. It also provides tables with pinout details, including alternate functions.
     
-    Navigate past the package maps until you find table 13 \textit{STM32F072x8/xB pin definitions}. This table provides pin number to pin name mappings, pin characteristics and limitations, and available alternate functions. Figure \ref{chip_pins} shows an annotated subset of table 13. 
+    Navigate past the package maps until you find Table 13 \textit{STM32F072x8/xB pin definitions}. This table provides pin number to pin name mappings, pin characteristics and limitations, and available alternate functions. Figure \ref{chip_pins} shows an annotated portion of table 13. 
     
     \subsubsection{Physical Pin Numbering}
     Beginning from the left-side of the table, the first set of column headers list the different packages available for the chip. These columns provide the physical pin numbering of the chip for that specific package. The STM32F072xB on the Discovery board we are using has a 64-pin low-quad-flat-pack (LQFP64) chip package; this column has been highlighted in orange. Notice that the lowest two rows do not have a number and are highlighted in red, this indicates that the specific pin on that row does not physically exist in the given package. 
     
     \begin{warning}
-        When selecting pins, always make sure they exist physically on the device package you are using! All GPIO outputs exist on the silicon die of the STM32F0. However, there aren't enough pins available on every type of chip packaging, and they are not all wired out.
+        When selecting pins, make sure they exist physically on the device package you are using! All GPIO outputs exist on the silicon die of the STM32F0. However, there aren't enough pins available on every type of chip packaging, and they are not all wired out.
     \end{warning}
 
     \subsubsection{Pin Name and Characteristics}
-    The next column highlighted green and titled ``Pin Name'' gives the conventional pin name indicating the specific GPIO port and location within the peripheral registers. When designing a hardware circuit around an STM32F0 device the information in this table is required to correctly map pin names used in software, to physical pin numbers on the chip. 
+    The next column titled ``Pin Name'' (highlighted in green) gives the conventional pin name which indicates the specific GPIO port and location within the peripheral registers. When designing a hardware circuit around an STM32F0 device the information in this table is required to map pin names used in software to physical pin numbers on the chip. 
    
    The next three columns give information about the input/output circuitry driving the pin. The definitions of the acronyms used are listed in Table 12. 
     
     \subsubsection{Alternate and Additional Functions}
-    The blue highlighted ``Alternate Functions'' column lists the various peripheral signals that are available for the specific pin. Once configured into alternate function mode, the GPIO peripheral connects one of these signals. The specific function connected is selected by the GPIO Alternate Function Registers (AFR).
+    The ``Alternate Functions'' column (highlighted in blue) lists the various peripheral signals available for the pin. Once configured into alternate function mode the GPIO peripheral connects one of these signals. The specific function connected is selected by the GPIO Alternate Function Registers (AFR).
     
-    The ``Additional Functions'' column lists pin capabilities connected when the pin is in analog mode. These are discussed in a later lab specifically dealing with the analog peripherals of the STM32F0.
+    The ``Additional Functions'' column lists pin capabilities while in analog mode. These are discussed in a later lab which introduces the analog peripherals of the STM32F0.
 
 
 %    Using a 64-pin LQFP (LQFP64)
@@ -399,16 +399,18 @@ This system allows the user to have a few different options when selecting pins 
     \end{figure}
 
     \begin{example}[Finding Pins With an Alternate Function]
-            In this example, we will find a pin that connects to the fourth capture/compare channel of timer 3. Browsing through the alternate functions column in figure \ref{chip_pins} shows the desired function circled in blue. Looking across the row describing the specific pin we can see that this pin belongs to GPIOB (circled in green) and is the 27th physical pin on the LQFP64 package used on the Discovery board (circled in orange).
+            This example demonstrates selecting a pin which connects to the fourth capture/compare channel of timer 3. 
+            
+            Begin by browsing through the alternate functions column in Table 13 until you find a signal titled ``TIM3\_CH4.'' The names of alternate functions always begin with an abbreviation of their peripheral, followed by a short designator which is indicated somewhere in the functional description. Figure \ref{chip_pins} shows one of the possible pin choices with the desired function circled in blue. Examining the pin information across the row we can see that this pin belongs to GPIOB (circled in green) and is the 27th physical pin on the LQFP64 package used on the Discovery board (circled in orange).
         
 %            Example: Chose arbitrary alternate function for a peripheral and walk through the process of finding pins
     \end{example}
 %    (add in section on how to graphically do this with stmcube later)
     
     \subsection{Selecting an Alternate Function}
-    Although a pin may have multiple alternate functions, it can only be used for one of them at a given time. Within the GPIO peripherals there are two registers that control what functions are connected to each pin. These are the \textit{Alternate Function High Register} (AFRH) and the  \textit{Alternate Function Low Register} (AFRL). 
+    Because a pin can only be connected to a single alternate function at a time, the GIPO peripherals have control registers dedicated to selecting between the possibilities. These are the \textit{Alternate Function High Register} (AFRH) and the  \textit{Alternate Function Low Register} (AFRL). 
     
-    Within these registers are regions of bits that select alternate functions by their alternate function number for the pin. These function numbers are documented in tables 14-19 of the \textit{Pinouts and Pin Descriptions} section in the device datasheet. 
+    Within these registers are regions of bits that select alternate functions by their alternate function number for the pin. These function numbers are documented in Tables 14-19 of the \textit{Pinouts and Pin Descriptions} section in the device datasheet. 
 %    Demonstrate the AFR registers in the GPIO peripheral
 %    Once have pins that can use the AF, need to find what specific AF number it is for that pin.
 %    Use tables 14-19 in the chip datasheet
@@ -417,11 +419,11 @@ This system allows the user to have a few different options when selecting pins 
 
    	
     \begin{example}[Determining an Alternate Function's Number] 
-Figure \ref{func_pins} shows a portion of table 15 in the pinouts and pin descriptions section of the device datasheet. This table lists the alternate functions for the GPIOB pins of the device. Continuing from the previous example, we can begin by finding the row representing PB1, the pin chosen with desired alternate function found in Table 13. 
+Figure \ref{func_pins} shows a portion of Table 15 in the pinouts and pin descriptions section of the device datasheet. This table lists the alternate functions for the GPIOB pins of the device. Continuing from the previous example, we can begin by finding the row representing PB1, the pin chosen with the TIM3\_CH4 function found in Table 13. 
 
-The row representing PB1 has been highlighted in green. Looking across the columns of the row shows the different alternate functions that were also listed in Table 13. Finding the desired alternate function, circled in blue, we can look up to the column header and see the alternate function number circled in red is ``AF1.'' 
+Looking across the columns of the PB1 row lists the same alternate functions listed in Table 13. The difference in this table is that the column header's indicate an alternate function number. Finding the TIM3\_CH4 (circled in blue), we can look up to the column header and see the alternate function number is ``AF1.'' (circled in red)
 
-By programming the matching bit pattern documented in the AFR register map for ``AF1'' into the bit region representing PB1 in the GPIOB alternate function registers we can select the capture/compare channel 4 of timer 3 to output on that pin.  
+By programming the bit pattern for AF1 into the bit region representing PB1 in the GPIOB alternate function registers we can select the capture/compare channel 4 of timer 3 to output on that pin. You will need to read the register map for the GPIO AFRH \& AFRL registers, as well as check the peripheral header files to see how the GPIO structure defines them.  
 %         Example: Find AF number and select for pin in previous example.
     \end{example}
 
@@ -432,11 +434,11 @@ By programming the matching bit pattern documented in the AFR register map for `
 \end{figure}
     
 \section{Lab Assignment:}
-For these exercises you will be working with one or more timer peripherals in the STM32F0. You are free to use whatever timer you wish for the first portion on timer interrupts. However, since the timers are only routed to a limited selection of pins, you won't have a choice what timers to use for the exercises that generate PWM on  LED pins.  
-Because the final exercise combines the two previous ones, you may wish to use the same timer for all three activities. This is possible but requires more thought when choosing timer prescaler and other attributes so that the timer operation is suitable for everything. It is far easier to use two separate timers, one for the longer period interrupt, the other for the short period PWM. 
+Tn these exercises you will be working with one or more timer peripherals in the STM32F0. You are free to use any timer you wish for the first portion on timer interrupts. However, since the timers are only routed to a limited selection of pins, you won't have a choice what timers to use for the exercises that generate PWM.  
+Because the final exercise combines the two previous ones, you may wish to use the same timer for all three activities. This is possible but requires more thought when choosing timer prescaler and other attributes so that the timer operation is suitable for both tasks. It is far easier to use two separate timers, one for the longer period interrupt, the other for the short period PWM. 
 
 \subsection{Using a Timer Interrupt}
-In this exercise, you'll set up an interrupt such that the update event (UEV) triggers an interrupt at a specific period. Using a timer peripheral allows for much greater flexibility in choosing an interrupt period over manually counting in the SysTick handler. Section \ref{timer_interrupts} provides the background information on how a timer needs to be configured to produce UEV interrupts. However, you will need to carefully read through the control register maps in the peripheral reference manual in order to determine the proper option bits to set. 
+In this exercise, you'll set up a timer such that the update event (UEV) triggers an interrupt at a specific period. Using a timer peripheral allows for much greater flexibility in choosing an interrupt period over manually counting in the SysTick handler. Section \ref{timer_interrupts} provides the background information on how a timer needs to be configured to produce UEV interrupts. However, you will need to carefully read through the control register maps in the peripheral reference manual to determine the proper option bits to set. 
 
 \begin{itemize}
     \item Select one of the available timers and enable in the RCC.
@@ -449,7 +451,7 @@ In this exercise, you'll set up an interrupt such that the update event (UEV) tr
         \item \textbf{The default processor frequency of the STM32F072 is 8 MHz. Use this value when calculating the timer parameters.}
         \item Don't forget to enable the UEV interrupt condition in the timer. 
         \item The timer will only have a single generic interrupt. (not a specific interrupt about the UEV) Look for one named after the timer you are using. 
-        \item Note that you shouldn't enable a timer until you've finished setting all the basic parameters and options. 
+        \item Note that you shouldn't enable a timer until you've finished setting all the basic parameters and options. (\underline{Not} referring to the RCC enable, always enable the peripheral clock in the RCC first!)
     \end{itemize}
     \item Do something with two LEDs in the interrupt handler. Leave the other two lights free for the other exercise. 
      \begin{itemize}
@@ -466,7 +468,7 @@ In this exercise, you'll set up an interrupt such that the update event (UEV) tr
 \subsection{Generating PWM with a Capture/Compare Unit}
 In this exercise you will set up PWM output to dim a LED on the discovery board. By changing the duty-cycle of the generated waveform you can directly control the apparent brightness of the LED. For this exercise you will need to find the specific timer and capture/compare channels that connect to the unused LED pins. 
 
-The lab manual mentioned that the frequency of a PWM signal isn't nearly as important as the duty-cycle, provided that the frequency is high enough that the system can't directly respond to the on-off periods. This is true when dimming LEDs, although the lower-limit isn't how fast the LED can respond to the electrical signal, but how fast the human eye can distinguish separate blinks of the LED apart from each other.
+The lab manual mentioned that the frequency of a PWM signal isn't nearly as important as the duty-cycle, provided that the frequency is high enough that the system can't directly respond to the on-off periods. This is true when dimming LEDs, although the lower-limit isn't how fast the LED can respond to the electrical signal, but how fast the human eye can distinguish separate blinks of the LED.
 When both the light and viewer are stationary, the human eye has difficulty seeing the blinking transitions past 70 Hz. However, many people can see noticeable flicker in moving lights even above 500 Hz. Because of this, you'll be using 800 Hz as the base frequency for the PWM. 
 
 \begin{itemize}
@@ -474,8 +476,7 @@ When both the light and viewer are stationary, the human eye has difficulty seei
     \item Configure the LED pins in the GPIO peripheral to alternate function mode, and select the timer's capture/compare alternate function.
     \item Configure the timer to have a UEV period of 800 Hz, but \underline{don't} enable the UEV interrupt. (not using the interrupt)  
     \begin{itemize}
-        \item Set the prescaler such that you have a reasonable range of counter values between zero and the top limit. 
-        \item Otherwise your timer will be too granular to be able to make fine adjustments to the duty-cycle of the PWM.
+        \item Set the prescaler such that you have a reasonable range of counter values between zero and the top limit. Otherwise your timer will be too granular to be able to make fine adjustments to the duty-cycle of the PWM.
     \end{itemize}
     
     \item Configure the appropriate capture/compare channels that connect to the LED pins to \underline{\textit{PWM mode 1}}. 
@@ -495,7 +496,7 @@ When both the light and viewer are stationary, the human eye has difficulty seei
 
 
 \subsection{Building an LED Crossfader}
-This final exercise uses the concepts of both the previous experiments to build a fun example. In this section, you'll set up two LEDs such that one of them will fade dimmer over time, while the other fades brighter. Once the limits have been hit, the direction will reverse and repeat. 
+This final exercise uses the concepts of both the previous experiments to build a fun example. In this section, you'll set up two LEDs such that one of them will fade dimmer over time, while the other fades brighter. Once the limits have been hit, the fade direction will reverse and repeat. 
 
 \begin{itemize}
     \item Set up the timer and GPIO to PWM two LEDs.

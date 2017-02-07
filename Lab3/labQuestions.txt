@@ -17,13 +17,21 @@ What is the purpose of the Alternate Function mode for a GPIO pin?
 
 In what document can you find the documentation for what GPIO pins have which alternate functions?
 
-
-
-
-
-
 Post-lab Questions:
 ----------------------------
-Have them do a PSC and ARR for a given system clock and target period.
+Have them do a PSC and ARR for a given system clock and target period. (hard do non-integer)
 
- 
+Find a random alternate function (must be on LQFP64)
+	need pin name, pin number on LQFP64, and alternate function number
+
+Measured value of timer UEV interrupt period from first experiment
+
+List the ARR and PSC values used for the second experiment
+
+	Describe what happened to the duty-cycle as the CCR value increased in PWM mode XXX
+	
+	Describe what happened to the duty-cycle as the CCR value increased in PWM mode YYY
+	
+	Include a logic analyzer screenshot of one PWM capture (doesn't matter which) 
+	
+What PWM mode is shown in figure 4.6 of the lab manual? (PWM mode 1 or 2)

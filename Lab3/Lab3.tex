@@ -195,7 +195,7 @@ Timers are at their core simply a register the increments or decrements whenever
 %    This manual will document the purpose of the base registers as they are used in each mode
 %        May also indicate groups of control bits that pertain to the configuration or operation 	
 
-\section{Using Timers to Generate Interrupts and Events}
+\section{Using Timers to Generate Interrupts and Events} \label{timer_interrupts}
 
     One of the most basic uses of a timer is to generate periodic interrupts. Unlike the SysTick timer which is typically configured once and to a specific base unit of time, the peripheral timers are available to use with arbitrary timing periods and can be utilized as event counters when using other signals as clock sources. Because their input prescaler can be used to divide the input clock by arbitrary integer values, it is possible to generate very long timer periods or match strange timing requirements that aren't multiples of the system clock. Section 18.3 \textit{TIM2 and TIM3 Functional Description} of the peripheral reference manual documents the following sections in greater detail. 
     
@@ -366,7 +366,7 @@ The three basic modes that the capture/compare channels can be configured into a
         \label{pwm_pin}
     \end{figure}
 
-\section{Configuring GPIO pins to Alternate Function Mode}
+\section{Configuring GPIO pins to Alternate Function Mode} \label{alternate_mode}
 
 Considering that in normal operating conditions a GPIO peripheral controls the output state of its pins, how does another peripheral such as a timer modify a pin's state? The answer lies within one of the available GPIO modes. In the GPIO mode register (MODER) there are four available pin modes, these are Input, Output, Analog and Alternate Function. Allowing a pin to connect directly to internal peripherals of the STM32F0 is the purpose of the alternate function mode. 
 
@@ -456,7 +456,81 @@ By programming the matching bit pattern documented in the AFR register map for `
 \end{figure}
     
 \section{Lab Assignment:}
-This manual will be updated with the lab assignment after additional review and testing. 
+For these exercises you will be working with one or more timer peripherals in the STM32F0. You are free to use whatever timer you wish for the first portion on timer interrupts. However, since the timers are only routed to a limited selection of pins, you won't have a choice what timers to use for the exercises that generate PWM on  LED pins.  
+Because the final exercise combines the two previous ones, you may wish to use the same timer for all three activities. This is possible but requires more thought when choosing timer prescaler and other attributes so that the timer operation is suitable for everything. It is far easier to use two separate timers, one for the longer period interrupt, the other for the short period PWM. 
 
+\subsection{Using a Timer Interrupt}
+In this exercise, you'll set up an interrupt such that the update event (UEV) triggers an interrupt at a specific period. Using a timer peripheral allows for much greater flexibility in choosing an interrupt period over manually counting in the SysTick handler. Section \ref{timer_interrupts} provides the background information on how a timer needs to be configured to produce UEV interrupts. However, you will need to carefully read through the control register maps in the peripheral reference manual in order to determine the proper option bits to set. 
+
+\begin{itemize}
+    \item Select one of the available timers and enable in the RCC.
+    \begin{itemize}
+        \item You may wish to jump ahead and find the timer that is connected to the LED pins and avoid using that one. 
+        \item Check the alternate functions of the LED pins to determine what timer is connected.
+    \end{itemize}
+    \item Configure the timer such that it triggers an UEV interrupt at 4 Hz.
+    \begin{itemize}
+        \item \textbf{The default processor frequency of the STM32F072 is 8 MHz. Use this value when calculating the timer parameters.}
+        \item Don't forget to enable the UEV interrupt condition in the timer. 
+        \item The timer will only have a single generic interrupt. (not a specific interrupt about the UEV) Look for one named after the timer you are using. 
+        \item The timers must be enabled in their control registers before they'll start counting. Don't enable a timer until you've finished setting all the basic parameters and options. 
+    \end{itemize}
+    \item Do something with two LEDs in the interrupt handler. Leave the other two lights free for the other exercise. 
+     \begin{itemize}
+         \item Don't forget to clear the UEV pending flag in the timer peripheral. 
+     \end{itemize}
+     \item Once you have the interrupt running, use a Saleae Logic to measure the period between LED toggles.
+     \begin{itemize}
+         \item Verify that the measured period is similar to what was expected. (Won't be exact due to context switch overhead, instruction execution etc.)
+         \item Include the measured value in your postlab.
+     \end{itemize}
+\end{itemize}
+
+
+\subsection{Generating PWM with a Capture/Compare Unit}
+In this exercise you will set up PWM output to dim a LED on the discovery board. By changing the duty-cycle of the generated waveform you can directly control the apparent brightness of the LED. For this exercise you will need to find the specific timer and capture/compare channels that connect to the unused LED pins. 
+
+The lab manual mentioned that the frequency of a PWM signal isn't nearly as important as the duty-cycle, provided that the frequency is high enough that the system can't directly respond to the on-off periods. This is true when dimming LEDs, although the lower-limit isn't how fast the LED can respond to the electrical signal, but how fast the human eye can distinguish separate blinks of the LED apart from each other.
+When both the light and viewer are stationary, the human eye has difficulty seeing the blinking transitions past 70 Hz. However, many people can see noticeable flicker in moving lights even above 500 Hz. Because of this, you'll be using 800 Hz as the base frequency for the PWM. 
+
+\begin{itemize}
+    \item Find the timer that has its capture/compare channels connected to the unused LEDs. 
+    \item Configure the LED pins in the GPIO peripheral to alternate function mode, and select the timer's capture/compare alternate function.
+    \item Configure the timer to have a UEV period of 800 Hz, but \underline{don't} enable the UEV interrupt. (not using the interrupt)  
+    \begin{itemize}
+        \item Set the prescaler such that you have a reasonable range of counter values between zero and the top limit. 
+        \item Otherwise your timer will be too granular to be able to make fine adjustments to the duty-cycle of the PWM.
+    \end{itemize}
+    
+    \item Configure the appropriate capture/compare channels that connect to the LED pins to \underline{\textit{PWM mode 1}}. 
+    \item Set the capture/compare register to the following values and observe the results using a logic analyzer:
+    \begin{itemize}
+        \item 25\% the value of the ARR register
+        \item 50\% the value of the ARR register
+        \item 75\% the value of the ARR register
+    \end{itemize}
+    \item Make sure to note the general behavior and change in duty-cycle for your postlab.
+    \item Change the capture/compare channels connecting to the LED pins to \underline{\textit{PWM mode 2}}.  
+    \begin{itemize}
+        \item Repeat the same steps performed above with the new mode.
+    \end{itemize}   
+    \item Take a screenshot of one of the logic captures and include in your postlab. 
+\end{itemize}
+
+
+\subsection{Building an LED Crossfader}
+This final exercise uses the concepts of both the previous experiments to build a fun example. In this section, you'll set up two LEDs such that one of them will fade dimmer over time, while the other fades brighter. Once the limits have been hit, the direction will reverse and repeat. 
+
+\begin{itemize}
+    \item Set up the timer and GPIO to PWM two LEDs.
+    \item Set up a longer-period timer interrupt. (the one used in the first experiment is fine)
+    \item Set the PWM duty-cycles so that one LED is bright and the other is off.
+    \item Incrementally modify the PWM duty-cycles in the timer interrupt, such that the brightness of both LEDs fade in opposite directions. 
+    \begin{itemize}
+        \item Once the end limits have been reached, reverse the direction
+        \item You can either keep separate variables tracking the direction and value of each capture/compare channel, or set the PWM modes such that only a single value is necessary.
+    \end{itemize}
+\end{itemize}
+ 
 
 \end{document}

@@ -136,7 +136,7 @@ Asynchronous systems operate without a physical clock signal. Some methods of as
 The topology of a communication interface is how the different devices (nodes) and the connections between them are arranged. Some interfaces are strictly point-to-point, which means that they connect only two devices with direct wires. Other interfaces have topologies which allow networks of devices to be connected together. Figure \ref{topologies} demonstrates a few simple topologies. 
 
 \begin{itemize}
-    \item \textbf{Daisy-Chain} -- Nodes in a daisy-chained network connect only to their adjacent neighbors. Some interfaces are designed to allow data to be passed along to its destination. 
+    \item \textbf{Daisy-Chain} -- Nodes in a daisy-chained network connect only to their adjacent neighbors. Some are designed to allow data to be passed along to its destination. 
     \item \textbf{Bus/Multi-Drop} -- All nodes on a bus share the same communication lines. This means that only a single device can be transmitting at a time, but all can receive
     \item \textbf{Star} -- All peripheral nodes communicate with a central master node.
     \item \textbf{Mesh} -- Nodes in a mesh network have arbitrary connections to each other. Some mesh networks are hierarchically ordered, others may be fully-connected.   
@@ -165,7 +165,7 @@ Hardware standards make it possible to convert an input signal into a collection
 
 \subsubsection{Hardware Protocols}
 Low level or hardware protocols define how bits are organized to form raw data. This primarily involves the rate that data is sampled and whether the interface has an explicit clock signal or is asynchronous.
-Depending on the complexity of the interface, hardware protocols usually include higher-level features such as start/stop signals, error-correction, message acknowledgment, addressing, data packets and more.
+Depending on the complexity of the interface, hardware protocols usually include higher-level features such as start/stop signals, error-correction, control flow, message acknowledgment, addressing, data packets and more.
 
 \subsubsection{Software Protocols}	
 At this point the communication peripheral's job is complete. Raw data can be converted into a communication signal and back on the receiving end. The last task is to interpret the raw data into useful instructions or information for the user's application.
@@ -173,26 +173,36 @@ At this point the communication peripheral's job is complete. Raw data can be co
 A software protocol is a device driver that gives meaning to the binary data flowing into and out of the system. These drivers can be as simple as recognizing certain values as commands, or as complex as defining the organization of variable-length data packets.  In order to communicate, the user's application must define a software protocol. 
 
 \subsection{Separating Interface and Protocol}
+   
+Some communication interfaces have clearly defined separations between the different standards, protocols, and application layers within them. 
 
+For example, IEEE 802.3 is the base standard for wired Ethernet and contains subclasses for the different speeds and modifications that have been made over the years. Built upon these standards are low-level protocols such as MAC, LLC, and PPP. On these is built IP, and IP is the the base of UDP and TCP which are used for raw data connections on conventional computer networks. 
 
-important thing to note is that while the terms protocol and standard are sometimes used interchangeably there are differences between the two. A protocol defines the bit patterns, data interpretation and control flow of an interface. A standard typically includes a protocol, but also specifies physical characteristics of the system such as voltage, current, detection method (single-ended, differential) and possibly even the connectors used.
+An example of a common software protocol used by computer networks is HTML. This format is used to move website data across the Internet, giving the browser application a known way to interpret raw data into something meaningful. 
 
+Unfortunately, unlike Ethernet, many low-level interfaces such as those used in embedded systems are much more unclear where the boundaries are. Many of these interfaces have protocols and standards that were designed specifically for each other and are called by the same name. 
+Because of this, many documents use the terms standard and protocol interchangeably. 
 
+\section{Common Embedded Interfaces}
+The STM32F072 has a generous selection of interface peripherals. These can be seen on the first page summary of the chip datasheet. These interfaces differ widely in operation, complexity, and features; however, they all are serial. 
 
-Some interfaces such as Ethernet have very clearly defined separations between the different parts and layers within them. Computer networks (which typically use Ethernet) in particular have the OSI model.
+The three most common serial communication interfaces used in embedded systems are TTL RS-232 (TTL-Serial/UART), Serial Peripheral Interface (SPI), and Inter-Integrated Circuit Bus (I2C). 
 
-Many low-level interfaces such as those used in many embedded systems are much more fuzzy where the boundaries are. 
+This lab teaches the basics of TTL RS-232 in the next few sections. SPI and I2C will be covered in later labs, a brief introduction is included here. 
 
+\begin{itemize}
+    \item \textbf{Serial Peripheral Interface (SPI)}
+    \begin{itemize}
+        \item SPI is a synchronous interface typically used for high-speed connections between microcontrollers and external memories or other fast-data devices.
+        \item It is a full-duplex interface, which means that both sides transmit and receive at the same time.
+    \end{itemize}
+    \item \textbf{Inter-Integrated Circuit Bus (I2C)}
+    \begin{itemize}
+        \item I2C is a low(er) speed synchronous interface designed to allow multiple master devices to share the same set of signal wires. 
+        \item It was primarily designed for low-speed sensors, but newer standards have increased the speed where it is also used for other purposes.
+    \end{itemize}
+\end{itemize}
 
-\section{Common Embedded Interfaces}	
-In general the interfaces that we'll be using are hardware protocols. You will have to define what the raw data means using a software protocol.
-
-Three of the most common (and simplest) interfaces used in embedded systems are:
-TTL RS-232 (UART)
-Discussed in detail in this lab
-SPI - Serial Peripheral Interface (Include very brief intro on basic details?)
-I2C - Inter-Integrated Circuit (Include very brief intro on basic details?)
-Others include: 1-wire, CAN, USB, Various wireless; Bluetooth, Zigbee, LoRa, WiFi etc...
 
 \section{Introducing RS-232}
 \subsection{Conventional RS-232}

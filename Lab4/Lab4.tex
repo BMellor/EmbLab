@@ -75,16 +75,263 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%                                                                                         %%%%
-%%%%       Chapter X:                                                                        %%%%
+%%%%       Chapter 5: Embedded Communications and the USART                                  %%%%
 %%%%                                                                                         %%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\setcounter{chapter}{2} % Manually adjust chapter counter to number before desired chapter heading
+\setcounter{chapter}{4} % Manually adjust chapter counter to number before desired chapter heading
 
 \begin{document}
 	
 \chapterimage{chapter_head_2.png} % Chapter heading image
-\chapter{Chapter Title}
+\chapter{Embedded Communications and the USART}
+
+\section{Communication Between Systems}
+All computing systems regardless of their size and power, are essentially useless if they don't have some way to communicate with the outside world. Even a large supercomputers are unable to perform any meaningful work without some method of introducing new data into the systems, and another to output a result. 
+
+Naturally this applies to embedded systems as well. In fact the majority of embedded peripherals as well as these labs are directed at either capturing or sending information in and out of the system. In the first lab we introduced the GPIO as the most basic method of data transfer. In the second we used the EXTI controller to allow efficient hardware monitoring of GPIO inputs. The third lab used the capture/compare units in a timer peripheral to generate pseudo-analog signals through PWM. 
+
+This lab introduces the fundamentals of data transfer through digital communication interfaces. These interfaces exist because information is only useful when it can be understood, therefore there must be defined ways of transmitting and interpreting it.
+
+\subsection{Parallel vs Serial}
+
+There are two main schemes, parallel and serial, for moving binary information across electrical connections. These two schemes are opposites of each other and are demonstrated in figure \ref{parallel_serial}. 
+
+\subsubsection{Parallel}
+Parallel interfaces transmit entire blocks of data using multiple wires, with each wire representing the state of a single binary bit. In a parallel system the transmitter sets the logical state of each wire, and the receiver samples all of the connections at a single instant. Parallel interfaces have a \textit{bit-width} which represents how many wires are in the connection, and indicates how many bits are sent at one time. Common bit-widths are powers of 2 to make converting into bytes simple. 
+
+\subsubsection{Serial}
+Serial interfaces use a single wire, and stream a block of data over time by lining up the bits behind each other. In order to properly transmit data, both the transmitter and receiver must agree on the time duration between data bits, known as the interface's \textit{bit/data rate}. A serial transmitter produces periodic transitions on the single data line corresponding to the data to be sent. The receiver samples this data line on a similar period and appends the sampled value to the end of the received data. 
+
+\begin{figure}[]
+    \centering\includegraphics[width=\textwidth]{parallel_serial}
+    \caption{Comparison of parallel and serial communication.}
+    \label{parallel_serial}
+\end{figure}
+
+\subsubsection{Interface Bandwidth and Limitations}
+Because parallel connections move entire groups of bits at a time they have a much higher \textit{bandwidth} (throughput) than an equivalent serial connection. Some examples of high-speed parallel connections are the STM32F0's internal device busses (AHB and APB) which connect the ARM processor core to the SRAM, flash memory and other peripherals.
+
+However, despite that equivalent-speed parallel connections have a higher bandwidth, most high-speed device interfaces such as SATA, USB and Ethernet are actually serial interconnects. The reason for this is because parallel connections are far more difficult to design and operate as the distance between the receiver and transmitter increases. With the incredibly high-speeds of today's communications, unless every wire in a connection is exactly the same length it is possible to have some bits arrive after the others. This means that unless the sampling rate of the receiver is slow enough to account for every bit in the connection, incorrect data will be captured.
+
+Serial connections inherently don't have issues with wire-delay. Because bits are streamed one after another, any delays along the wire have a constant effect on the data and can't cause corruption. This enables serial connections to have a much higher bit rate than parallel, and possibly even a higher total bandwidth.
+
+\subsection{Synchronous vs Asynchronous}
+
+Regardless of whether an interface is serial or parallel, there must be be a mechanism that synchronizes when the transmitter and receiver updates or samples the connection. Similar to parallel and serial there are two methods, synchronous and asynchronous, of performing this task. These are demonstrated in figure \ref{synchronous_asynchronous}.
+
+\subsubsection{Synchronous} 
+Synchronous systems use a separate ``clock'' signal which notifies the receiver when to sample.  Often the data capture is synchronized to a transition such as rising or falling-edge. Synchronous systems are often simpler in design but require the extra clock connection.
+
+\subsubsection{Asynchronous}
+Asynchronous systems operate without a physical clock signal. Some methods of asynchronous communication encode a virtual clock within the transitions of the data while others estimate the time intervals that data should be expected to arrive. Because of the lack of a clock signal, asynchronous interconnects are typically more complex and have lower data rates than synchronous ones. 
+
+\begin{figure}[]
+    \centering\includegraphics[width=\textwidth]{synchronous_asynchronous}
+    \caption{Comparison of synchronous and asynchronous serial communication.}
+    \label{synchronous_asynchronous}
+\end{figure}
+
+\subsection{Connection Topologies} 
+The topology of a communication interface is how the different devices (nodes) and the connections between them are arranged. Some interfaces are strictly point-to-point, which means that they connect only two devices with direct wires. Other interfaces have topologies which allow networks of devices to be connected together. Figure \ref{topologies} demonstrates a few simple topologies. 
+
+\begin{itemize}
+    \item \textbf{Daisy-Chain} -- Nodes in a daisy-chained network connect only to their adjacent neighbors. Some interfaces are designed to allow data to be passed along to its destination. 
+    \item \textbf{Bus/Multi-Drop} -- All nodes on a bus share the same communication lines. This means that only a single device can be transmitting at a time, but all can receive
+    \item \textbf{Star} -- All peripheral nodes communicate with a central master node.
+    \item \textbf{Mesh} -- Nodes in a mesh network have arbitrary connections to each other. Some mesh networks are hierarchically ordered, others may be fully-connected.   
+\end{itemize}
+
+
+
+\begin{figure}[]
+    \centering\includegraphics[width=\textwidth]{topologies}
+    \caption{Simple network topologies.}
+    \label{topologies}
+\end{figure}
+
+\section{Communication Standards \& Protocols}
+
+Aside from knowing how to connect and when to sample the inputs, communicating devices must know how to interpret signals into bits and how the patterns of bits make up data. To manage this, all interfaces are combinations of hardware standards and communication protocols. 
+
+\subsection{Hardware Standards}	
+Hardware standards define the physical and signaling characteristics of an interface.
+A standard typically indicates the medium that the signals are transferred over such as conductive wires, optical, radio frequency or others. The standard defines the method that signals are interpreted into bits. This may be as simple as thresholding a voltage on a wire (single-ended), monitoring the voltage difference or current flow between a pair of wires (differential) or even a modulated waveform. 
+
+Standards often indicate whether an interface is parallel or serial.
+
+\subsection{Communication Protocols}
+Hardware standards make it possible to convert an input signal into a collection of bits. However, protocols define the meaning of bits such that they create useful data. 
+
+\subsubsection{Hardware Protocols}
+Low level or hardware protocols define how bits are organized to form raw data. This primarily involves the rate that data is sampled and whether the interface has an explicit clock signal or is asynchronous.
+Depending on the complexity of the interface, hardware protocols usually include higher-level features such as start/stop signals, error-correction, message acknowledgment, addressing, data packets and more.
+
+\subsubsection{Software Protocols}	
+At this point the communication peripheral's job is complete. Raw data can be converted into a communication signal and back on the receiving end. The last task is to interpret the raw data into useful instructions or information for the user's application.
+
+A software protocol is a device driver that gives meaning to the binary data flowing into and out of the system. These drivers can be as simple as recognizing certain values as commands, or as complex as defining the organization of variable-length data packets.  In order to communicate, the user's application must define a software protocol. 
+
+\subsection{Separating Interface and Protocol}
+
+
+important thing to note is that while the terms protocol and standard are sometimes used interchangeably there are differences between the two. A protocol defines the bit patterns, data interpretation and control flow of an interface. A standard typically includes a protocol, but also specifies physical characteristics of the system such as voltage, current, detection method (single-ended, differential) and possibly even the connectors used.
+
+
+
+Some interfaces such as Ethernet have very clearly defined separations between the different parts and layers within them. Computer networks (which typically use Ethernet) in particular have the OSI model.
+
+Many low-level interfaces such as those used in many embedded systems are much more fuzzy where the boundaries are. 
+
+
+\section{Common Embedded Interfaces}	
+In general the interfaces that we'll be using are hardware protocols. You will have to define what the raw data means using a software protocol.
+
+Three of the most common (and simplest) interfaces used in embedded systems are:
+TTL RS-232 (UART)
+Discussed in detail in this lab
+SPI - Serial Peripheral Interface (Include very brief intro on basic details?)
+I2C - Inter-Integrated Circuit (Include very brief intro on basic details?)
+Others include: 1-wire, CAN, USB, Various wireless; Bluetooth, Zigbee, LoRa, WiFi etc...
+
+\section{Introducing RS-232}
+\subsection{Conventional RS-232}
+Historical use as "serial"
+Origin, uses, old connector, voltage levels
+\begin{figure}[]
+    \centering\includegraphics[width=0.3\textwidth]{db9_pinout}
+    \caption{Conventional DB9 serial connector and pinout.}
+    \label{db9_pinout}
+\end{figure} 
+\subsection{Embedded TTL RS-232 (TTL-Serial)}
+Embedded system use
+differences to conventional RS-232
+TTL RS-232 Standard Details 
+\begin{figure}[]
+    \centering\includegraphics[width=\textwidth]{serial_detail}
+    \caption{RS-232 and TTL-Serial logic levels and polarity.}
+    \label{serial_detail}
+\end{figure}
+BAUD rates and Oversampling
+Start and Stop Bits
+Parity 
+USB-UART Cables
+Purpose and use, specifically mentioned in later section
+
+\subsection{ASCII Text Encoding}
+Old standard for text exchange based on 8-bit characters
+Has 128 characters in 7-bits, the last bit is used for parity
+Some characters have system meanings such as a newline char
+others are non-printing
+Some system chars no longer have much meaning in modern systems
+Was extended to use all 8-bits 
+The original ASCII has since been expanded into the Unicode character standard
+Many different encodings for unicode such as UTF8
+Will be using base ASCII for embedded communication	
+\begin{figure}[]
+    \centering\includegraphics[width=\textwidth]{ascii_table}
+    \caption{Subset of the ASCII text encoding standard.}
+    \label{ascii_table}
+\end{figure}
+
+\section{Introducing the USART}
+What the USART is and why it has its name
+Typically used for TTL RS-232
+Modes of operation
+mainly to mention that it has other modes, but we won't discuss them 
+\subsection{USART Registers}	
+Overview of all registers used for RS-232
+Give short description and what each register does (what settings it manages)
+Mention other registers and indicate that they won't need them
+\subsection{Configuring the BAUD Rate}	
+Configuring the BAUD rate registers
+Basic equations of calculating baud rate
+How to load into the mantissa and fractional baud registers
+\subsection{Blocking vs Non-blocking Operation}
+mainly mention that you can use buffers and interrupts to make code that doesn't wait around until transmission is complete. 
+mention why it's bad to wait sometimes
+won't be doing non-blocking drivers in this lab (later lab perhaps?)
+\begin{figure}[]
+    \centering\includegraphics[width=\textwidth]{blocking_nonblocking}
+    \caption{Blocking and non-blocking drivers.}
+    \label{blocking_nonblocking}
+\end{figure}
+\subsection{Performing Basic Transmits and Receives}
+Give flowcharts for blocking receive and transmit
+\begin{figure}[]
+    \centering\includegraphics[width=\textwidth]{blocking_flowchart}
+    \caption{Flowchart for simple RX/TX communications on the USART.}
+    \label{blocking_flowchart}
+\end{figure}
+Explicitly say when they need to wait/check a flag for this condition before moving onward. 
+Don't give actual bit names, but they should be able to use the register descriptions to know where to look
+Give pretty obvious hints as to what they should look for when searching for bits.
+\subsubsection{Text Formatting}
+No printf yet... need to build own string transmit, string compare and eventually numeric value to ASCII character functions
+Kiel provides a miniature version of the c standard library called microlib
+Can configure and use printf with our USART, but won't in this lab. (later labs?)
+
+\section{Using a USB-UART Cable and the Terminal}
+\subsection{The USB-UART Cable}
+Using the USB-USART cable and Putty Terminal program
+Using and connecting the cable
+
+\begin{figure}[]
+    \centering\includegraphics[width=0.6\textwidth]{usb_uart}
+    \caption{Pinout of the Adafruit 954 USB-UART cable.}
+    \label{usb_uart}
+\end{figure}
+
+\subsection{Finding Installed Ports on Windows}
+Where to find on windows
+windows calls "COM\#" located in device manager
+need steps to find on lab machines.
+
+
+
+
+\subsection{Using the Putty Terminal Program}
+How to set up Putty
+
+\begin{figure}[]
+    \centering\includegraphics[height=0.45\textheight]{device_manager}
+    \caption{Windows device manager with the ports tab expanded.}
+    \label{device_manager}
+\end{figure}
+\begin{figure}[]
+    \centering\includegraphics[height=0.40\textheight]{putty}
+    \caption{Putty serial terminal}
+    \label{putty}
+\end{figure}
+mention typing in terminal, no response
+how to test cable/terminal with loopback (wire between RX/TX)
+
+\section{Lab Assignment}
+\subsection{Preparing to use the USART} 
+Set up pins and connect USB-USART cable
+Have them test terminal/cable with loopback
+Provided code (HAL library?) to enable and test USART, should see string printed in terminal
+\subsection{Blocking Transmission}	
+Set up and enable USART to baud rate using registers
+Transmit single char in loop to terminal
+Write simple string transmit function and send strings to terminal 
+mention C-strings, but tell them to look elsewhere for help with those
+Capture and decode the string using the logic analyzer
+include screenshot in lab report
+\subsection{Blocking Reception}			
+Receive single chars in loop from terminal
+toggle LEDs on char match (r for red etc...)
+\subsection{Interrupt-Based Reception and Command Parsing}	
+Set up USART RX interrupt
+set up static buffer (with basic over/underflow protection)
+buffer word until newline and set flag
+Use simple state machine and string match (they can write) in main program to recognize simple command strings (example: "red \\n on \\n")
+Provide text feedback "ready for command", "buffer overflow", "unknown command", "invalid command", "command accepted"
+\begin{figure}[]
+    \centering\includegraphics[width=\textwidth]{command_flowchart}
+    \caption{Flowchart for command parsing.}
+    \label{command_flowchart}
+\end{figure}
 
 
 \end{document}

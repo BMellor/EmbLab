@@ -1,0 +1,20 @@
+Figure List
+------------------------------
+x- Parallel vs Serial (parallel_serial)
+x- Synchronous vs Asynchronous (synchronous_asynchronous)
+x- Connection Topologies (topologies)
+x- DB9 RS-232 Connector (db9_pinout)
+- RS-232 signal vs TTL-Serial (serial_comparison)
+- TTL-Serial Detail (serial_detail)
+	Indicate start/stop bits
+	Baud rate and oversampling
+	Parity
+x- Small ASCII Table (ascii_table)
+- Blocking and Non-blocking Drivers (blocking_nonblocking)
+- Flowchart for blocking RX/TX (blocking_flowchart)
+x- USB-UART Cable and Pinout (usb_uart)
+x- Windows Device Manager (device_manager)
+x- Putty Screenshot (putty)
+- Command Parser Flowchart (command_flowchart)
+
+miscellaneous

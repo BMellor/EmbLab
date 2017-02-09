@@ -4,22 +4,24 @@
 Embedded Communications and the USART
 ---------------------------------------------
 
-Communication Between Systems
+\section{Communication Between Systems}
 	Not specific to embedded systems
-	Parallel vs Serial
+	\subsection{Parallel vs Serial}
 		(image of parallel vs serial)
 		Discuss pro's and con's of both types
 		Why many systems use serial 
-	Synchronous vs Asynchronous
-		(image of parallel vs serial)
+	\subsection{Synchronous vs Asynchronous}
+		(image of Synchronous vs Asynchronous)
 		Discuss pro's and con's of both types
 			Sometimes clock can be embedded and recovered by the transitions in the data signal
 		Typical use-cases of both
-	Connection Topologies (very brief)
+	\subsection{Connection Topologies} 
+		define topology
+			The topology of a communications network is how the different devices (nodes) and the connections between them are arranged.
 		Point-to-Point, Multidrop/Bus, star etc...
 		(simple graphic)
 		
-	Communication Standards & Protocols
+\section{Communication Standards & Protocols}
 	
 		All interfaces are combinations of hardware/physical standards and communication protocols. 
 		
@@ -27,27 +29,35 @@ Communication Between Systems
 		
 		Many low-level interfaces such as those used in many embedded systems are much more fuzzy where the boundaries are. 
 		
+	\subsection{Hardware Standards}	
 		A hardware or physical standard defines the physical characteristics of an interface. This involves things such as single-ended or differential signaling, multi-device topologies, optical, wireless frequency and modulation etc...
 			Whether an interface is parallel and serial is something a hardware standard determines. 
 		
-		Protocols define the meaning of a communication signal. 
+	\subsection{Communication Protocols}
+		Protocols define the meaning of a communication signal.
+		
+		\subsubsection{Hardware Protocols}
 			Low level or hardware protocols define how bits are extracted from a signal. This primarily involves how signals are sampled and timed. Whether an interface has an explicit clock signal or is asynchronous.
 				Depending on the complexity, hardware protocols may also include higher-level features such as error-correction, start/stop signals, message acknowledgment, addressing, data packets and more.
-			
+				
+		\subsubsection{Software Protocols}	
 			Application or software protocols interpret raw data. These are written by the end-user and define how the multiple systems on the communication interface interact. 
-		
+			
+	\section{Common Embedded Interfaces}	
 		In general the interfaces that we'll be using are hardware protocols. You will have to define what the raw data means using a software protocol.
 		
-		Three of the most common (and simplest) protocols used in embedded systems are:
+		Three of the most common (and simplest) interfaces used in embedded systems are:
 			TTL RS-232 (UART)
 				Discussed in detail in this lab
 			SPI - Serial Peripheral Interface (Include very brief intro on basic details?)
 			I2C - Inter-Integrated Circuit (Include very brief intro on basic details?)
-
+		Others include: 1-wire, CAN, USB, Various wireless; Bluetooth, Zigbee, LoRa, WiFi etc...
 		
-Introducing RS-232 
+\section{Introducing RS-232}
+	\subsection{Conventional RS-232}
 	Historical use as "serial"
 		Origin, uses, old connector (image?) voltage levels 
+	\subsection{Embedded TTL RS-232 (TTL-Serial)}
 	Embedded system use
 		differences to conventional RS-232
 		(simple graphic of different voltage levels and polarity)
@@ -57,78 +67,86 @@ Introducing RS-232
 		Start and Stop Bits
 		Parity 
 	USB-UART Cables
-		Purpose and use
+		Purpose and use, specifically mentioned in later section
 		
-	ASCII 
+	\subsection{ASCII Text Encoding}
 		Old standard for text exchange based on 8-bit characters
 		Has 128 characters in 7-bits, the last bit is used for parity
 			Some characters have system meanings such as a newline char
-			Some system chars no longer have much meaning in modern systems
+				others are non-printing
+				Some system chars no longer have much meaning in modern systems
 			Was extended to use all 8-bits 
-		The original ASCII has since been expanded into the Unicode encoding standard
-			Unicode also has smaller-sized subsets such as UTF8 (not a subset)
+		The original ASCII has since been expanded into the Unicode character standard
+			Many different encodings for unicode such as UTF8
 		Will be using base ASCII for embedded communication	
 			(include small ASCII table)
 
-Introducing the USART
+\section{Introducing the USART}
 	What the USART is and why it has its name
 	Typically used for TTL RS-232
 	Modes of operation
 		mainly to mention that it has other modes, but we won't discuss them 
+	\subsection{USART Registers}	
 	Overview of all registers used for RS-232
 		Give short description and what each register does (what settings it manages)
 		Mention other registers and indicate that they won't need them
+	\subsection{Configuring the BAUD Rate}	
 	Configuring the BAUD rate registers
 		Basic equations of calculating baud rate
 		How to load into the mantissa and fractional baud registers
-	Blocking vs Non-blocking drivers
+	\subsection{Blocking vs Non-blocking Operation}
 		mainly mention that you can use buffers and interrupts to make code that doesn't wait around until transmission is complete. 
 		mention why it's bad to wait sometimes
 		won't be doing non-blocking drivers in this lab (later lab perhaps?)
-	Basic blocking TX/RX
+	\subsection{Performing Basic Transmits and Receives}
 		Give flowcharts for blocking receive and transmit
 			Explicitly say when they need to wait/check a flag for this condition before moving onward. 
 			Don't give actual bit names, but they should be able to use the register descriptions to know where to look
 			Give pretty obvious hints as to what they should look for when searching for bits.
-	Text Formatting
+	\subsubsection{Text Formatting}
 		No printf yet... need to build own string transmit, string compare and eventually numeric value to ASCII character functions
 		Kiel provides a miniature version of the c standard library called microlib
 		Can configure and use printf with our USART, but won't in this lab. (later labs?)
 		
+\section{Using a USB-UART Cable and the Terminal}
+	\subsection{The USB-UART Cable}
 Using the USB-USART cable and Putty Terminal program
 	Using and connecting the cable
 	(Include image and pinout of cable available in stockroom)
+	
+	\subsection{Finding Installed Ports on Windows}
 	Where to find on windows
 		windows calls "COM#" located in hardware manager
 			need steps to find on lab machines.
 			(image of hardware manager)
 			
-		Probably skip mac/linux
-			Mac /dev/tty# tty.usbserial-### /dev/cu.###
-			Linux calls "/dev/tty#"	ttyUSBn ttyACMn
+	\subsection{Using the Putty Terminal Program}
 	How to set up Putty
 		(image of putty)
 		mention typing in terminal, no response
 		how to test cable/terminal with loopback (wire between RX/TX)
 		
-Lab Assignment
-	Set up pins and connect USB-USART cable 
+\section{Lab Assignment}
+	\subsection{Preparing to use the USART} 
+		Set up pins and connect USB-USART cable
 		Have them test terminal/cable with loopback
 		Provided code (HAL library?) to enable and test USART, should see string printed in terminal
-			Steps to run putty and find 
-	Set up and enable USART to baud rate using registers
-	Transmit single char in loop to terminal
-	Write simple string transmit function and send strings to terminal 
-		mention C-strings, but tell them to look elsewhere for help with those
-		Capture and decode the string using the logic analyzer
-			include screenshot in lab report
+	\subsection{Blocking Transmission}	
+		Set up and enable USART to baud rate using registers
+		Transmit single char in loop to terminal
+		Write simple string transmit function and send strings to terminal 
+			mention C-strings, but tell them to look elsewhere for help with those
+			Capture and decode the string using the logic analyzer
+				include screenshot in lab report
+	\subsection{Blocking Reception}			
 	Receive single chars in loop from terminal
 		toggle LEDs on char match (r for red etc...)
-	Set up USART RX interrupt
-		set up static buffer (with basic over/underflow protection)
-		buffer word until newline and set flag
-	Use simple state machine and string match (they can write) in main program to recognize simple command strings (example: "red \n on \n")
-	Provide text feedback "ready for command", "buffer overflow", "unknown command", "invalid command", "command accepted"
+	\subsection{Interrupt-Based Reception and Command Parsing}	
+		Set up USART RX interrupt
+			set up static buffer (with basic over/underflow protection)
+			buffer word until newline and set flag
+		Use simple state machine and string match (they can write) in main program to recognize simple command strings (example: "red \n on \n")
+		Provide text feedback "ready for command", "buffer overflow", "unknown command", "invalid command", "command accepted"
 	
 	
 Prelab

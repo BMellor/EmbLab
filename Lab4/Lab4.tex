@@ -208,10 +208,9 @@ This lab teaches the basics of TTL RS-232 in the next few sections. SPI and I2C 
 \subsection{Conventional RS-232}
 RS-232 was first introduced in 1962 by the Electronic Industries Alliance as a method of connecting teletype terminals to a central computer. It is a point-to-point, asynchronous, full-duplex (simultaneous bi-directional communication) interface with hardware flow control signals. 
 
-Despite changing its voltage levels and connectors over the years, RS-232 became the standard method of interconnection between computers and accessories until it began to be replaced in the late 1980's by PS2 and later USB. Because of its long and common use, RS-232 is often referred to simply as ``serial.'' 
+Despite changing its voltage levels and connectors over the years, RS-232 became the standard method of interconnection between computers and accessories until it began to be replaced in the late 1980's by PS2 and later USB. Because of its long and common use, RS-232 is often referred to simply as ``Serial.'' 
 
-
-RS-232 carries a number of features originally designed for slow dial-up connections. The flow control signals allow the transmitter and receiver to directly signal to each other that they are ready with new data or that they need a pause to process what has been transmitted. 
+RS-232 carries a number of features originally designed for slow dial-up connections. The flow control signals allow the transmitter and receiver to directly notify each other that they are ready with new data or that they need a pause to process what has been transmitted. To ensure that the data signal was able to be read across a potentially long cable, RS-232 uses a wide voltage swing with positive voltages representing a `1' and negative voltages for a `0.' Although the standard allows up to {\textpm}25V many devices use between {\textpm}12V and {\textpm}15V.
 
 The most recent and common connector used for RS-232 is the 9-pin trapezoidal DE-9 (often mistakenly called DB-9). Figure \ref{db9_pinout} shows a representation and pinout of the connector. While most consumer equipment does not feature a physical serial port anymore, RS-232 is still commonly used for equipment control within science and industry. 
 
@@ -223,22 +222,48 @@ The most recent and common connector used for RS-232 is the 9-pin trapezoidal DE
 \end{figure} 
 
 \subsection{Embedded TTL RS-232 (TTL-Serial)}
-RS-232 
+Unlike the original legacy hardware, many embedded systems run at a far lower voltages than the  RS-232 {\textpm}25V specification. Additionally, many of these systems can't generate or tolerate negative voltages. Because of this, most systems use a variant of RS-232 called TTL Serial.
 
+TTL Serial is the same protocol as RS-232 but uses a more reasonable voltage range for signaling. Depending on the power supply that the embedded system operates from, TTL Serial often has a voltage range between 0V and 1.8V to 5V. 
 
-Embedded system use
-differences to conventional RS-232
-TTL RS-232 Standard Details 
+Figure \ref{serial_detail} shows a detailed look into a RS-232 and TTL Serial data frame (packet). As shown, a TTL Serial signal not only has a smaller voltage range, but the waveform is also inverted. 
+
 \begin{figure}[]
     \centering\includegraphics[width=\textwidth]{serial_detail}
     \caption{RS-232 and TTL-Serial logic levels and polarity.}
     \label{serial_detail}
 \end{figure}
-BAUD rates and Oversampling
-Start and Stop Bits
-Parity 
-USB-UART Cables
-Purpose and use, specifically mentioned in later section
+
+RS-232 is a very flexible protocol in that many of the communication parameters are adjustable by the user. These next few sections discuss important characteristics of a RS-232 frame.  
+
+\subsubsection{Baud Rate} 
+Because RS-232 is asynchronous, both the transmitter and receiver are required to operate on a pre-agreed period between bits. This frequency is known as the \textit{Baud Rate} and represents the number of bits per second that is transmitted. 
+
+RS-232 has no checking mechanism to ensure that both devices are tuned to the same Baud. This means that it is possible to receive corrupt data if the baud settings are not configured properly. 
+
+In figure \ref{serial_detail} the bit periods are indicated by alternating white and gray shading. 
+ 
+\subsubsection{Start and Stop Bits}
+Although the official RS-232 protocol doesn't have a mechanism to detect the receiving Baud rate, it does include \textit{framing bits} which alert the hardware about newly arriving data. 
+
+The first signal transition in figure \ref{serial_detail} is the \textit{start bit} of a data frame. The start bit is used to signal a new data frame and synchronize the clock of the receiver to the transmitter.   
+
+The last transition is the \textit{stop bit} which serves as a spacer to give a minimum delay time before the next bit can start. Originally this was designed to allow the mechanical hardware in the teletype machines to move to the next position in the document.
+
+The number of start and stop bits within a data frame is configurable. Many serial peripherals allow the user to select the number of framing bits. However, similar to the baud rate, both devices need to agree to interpret the data correctly. 
+
+\subsubsection{Data Bits} 
+Typically each frame in RS-232 contains a single data byte. Although uncommon, the standard allows non-byte data sizes between 5 and 9 bits. The baud rate of the signal includes the framing bits within its calculation of total bits per second. This means that the actual useful data transmitted is always less than the theoretical throughput indicated by the baud. 
+
+\subsubsection{Parity \& Error Checking}
+Most hardware peripherals support appending a \textit{parity} bit to the end of the data. Parity is a method of error checking, where the parity bit is set such that the number of `1' bits in each data frame is always even or odd. If the number of received `1' bits fails to match the expected parity, then the hardware can determine that the transmission has been corrupted. 
+
+Parity can only determine if as single bit in the data has been corrupted, it doesn't provide for any error correction and can fail if an even number of bits are corrupt. Parity isn't used very often anymore because of this limitation. Many devices contain hardware for performing more sophisticated \textit{cyclic redundancy checks} (CRC).  
+
+%\subsubsection{USB-UART Cables}
+%Because it is unlikely that consumer computers have native TTL Serial interfaces, many chip vendors sell devices that act as a protocol bridge between USB and TTL Serial. These are built into cables or small circuit boards and often called USB-Serial or USB-UART converters. 
+%
+%Although these devices are almost universal, this lab suggests using the Adafruit 954 USB-UART cable. This cable directly connects to the USB port of a desktop computer and outputs 3.3V TTL Serial on a 4-pin wire connector. 
 
 \subsection{ASCII Text Encoding}
 Old standard for text exchange based on 8-bit characters
@@ -265,7 +290,7 @@ mainly to mention that it has other modes, but we won't discuss them
 Overview of all registers used for RS-232
 Give short description and what each register does (what settings it manages)
 Mention other registers and indicate that they won't need them
-\subsection{Configuring the BAUD Rate}	
+\subsection{Configuring the Baud Rate}	
 Configuring the BAUD rate registers
 Basic equations of calculating baud rate
 How to load into the mantissa and fractional baud registers

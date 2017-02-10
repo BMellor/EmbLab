@@ -206,14 +206,26 @@ This lab teaches the basics of TTL RS-232 in the next few sections. SPI and I2C 
 
 \section{Introducing RS-232}
 \subsection{Conventional RS-232}
-Historical use as "serial"
-Origin, uses, old connector, voltage levels
+RS-232 was first introduced in 1962 by the Electronic Industries Alliance as a method of connecting teletype terminals to a central computer. It is a point-to-point, asynchronous, full-duplex (simultaneous bi-directional communication) interface with hardware flow control signals. 
+
+Despite changing its voltage levels and connectors over the years, RS-232 became the standard method of interconnection between computers and accessories until it began to be replaced in the late 1980's by PS2 and later USB. Because of its long and common use, RS-232 is often referred to simply as ``serial.'' 
+
+
+RS-232 carries a number of features originally designed for slow dial-up connections. The flow control signals allow the transmitter and receiver to directly signal to each other that they are ready with new data or that they need a pause to process what has been transmitted. 
+
+The most recent and common connector used for RS-232 is the 9-pin trapezoidal DE-9 (often mistakenly called DB-9). Figure \ref{db9_pinout} shows a representation and pinout of the connector. While most consumer equipment does not feature a physical serial port anymore, RS-232 is still commonly used for equipment control within science and industry. 
+
+
 \begin{figure}[]
     \centering\includegraphics[width=0.3\textwidth]{db9_pinout}
-    \caption{Conventional DB9 serial connector and pinout.}
+    \caption{Conventional DE9 serial connector and pinout.}
     \label{db9_pinout}
 \end{figure} 
+
 \subsection{Embedded TTL RS-232 (TTL-Serial)}
+RS-232 
+
+
 Embedded system use
 differences to conventional RS-232
 TTL RS-232 Standard Details 
@@ -316,32 +328,32 @@ How to set up Putty
 mention typing in terminal, no response
 how to test cable/terminal with loopback (wire between RX/TX)
 
-\section{Lab Assignment}
-\subsection{Preparing to use the USART} 
-Set up pins and connect USB-USART cable
-Have them test terminal/cable with loopback
-Provided code (HAL library?) to enable and test USART, should see string printed in terminal
-\subsection{Blocking Transmission}	
-Set up and enable USART to baud rate using registers
-Transmit single char in loop to terminal
-Write simple string transmit function and send strings to terminal 
-mention C-strings, but tell them to look elsewhere for help with those
-Capture and decode the string using the logic analyzer
-include screenshot in lab report
-\subsection{Blocking Reception}			
-Receive single chars in loop from terminal
-toggle LEDs on char match (r for red etc...)
-\subsection{Interrupt-Based Reception and Command Parsing}	
-Set up USART RX interrupt
-set up static buffer (with basic over/underflow protection)
-buffer word until newline and set flag
-Use simple state machine and string match (they can write) in main program to recognize simple command strings (example: "red \\n on \\n")
-Provide text feedback "ready for command", "buffer overflow", "unknown command", "invalid command", "command accepted"
-\begin{figure}[]
-    \centering\includegraphics[width=\textwidth]{command_flowchart}
-    \caption{Flowchart for command parsing.}
-    \label{command_flowchart}
-\end{figure}
+%\section{Lab Assignment}
+%\subsection{Preparing to use the USART} 
+%Set up pins and connect USB-USART cable
+%Have them test terminal/cable with loopback
+%Provided code (HAL library?) to enable and test USART, should see string printed in terminal
+%\subsection{Blocking Transmission}	
+%Set up and enable USART to baud rate using registers
+%Transmit single char in loop to terminal
+%Write simple string transmit function and send strings to terminal 
+%mention C-strings, but tell them to look elsewhere for help with those
+%Capture and decode the string using the logic analyzer
+%include screenshot in lab report
+%\subsection{Blocking Reception}			
+%Receive single chars in loop from terminal
+%toggle LEDs on char match (r for red etc...)
+%\subsection{Interrupt-Based Reception and Command Parsing}	
+%Set up USART RX interrupt
+%set up static buffer (with basic over/underflow protection)
+%buffer word until newline and set flag
+%Use simple state machine and string match (they can write) in main program to recognize simple command strings (example: "red \\n on \\n")
+%Provide text feedback "ready for command", "buffer overflow", "unknown command", "invalid command", "command accepted"
+%\begin{figure}[]
+%    \centering\includegraphics[width=\textwidth]{command_flowchart}
+%    \caption{Flowchart for command parsing.}
+%    \label{command_flowchart}
+%\end{figure}
 
 
 \end{document}

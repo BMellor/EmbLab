@@ -112,7 +112,7 @@ Serial interfaces use a single wire, and stream a block of data over time by lin
 \subsubsection{Interface Bandwidth and Limitations}
 Because parallel connections move entire groups of bits at a time they have a much higher \textit{bandwidth} (throughput) than an equivalent serial connection. Some examples of high-speed parallel connections are the STM32F0's internal device busses (AHB and APB) which connect the ARM processor core to the SRAM, flash memory and other peripherals.
 
-However, despite that equivalent-speed parallel connections have a higher bandwidth, most high-speed device interfaces such as SATA, USB and Ethernet are actually serial interconnects. The reason for this is because parallel connections are far more difficult to design and operate as the distance between the receiver and transmitter increases. With the incredibly high-speeds of today's communications, unless every wire in a connection is exactly the same length it is possible to have some bits arrive after the others. This means that unless the sampling rate of the receiver is slow enough to account for every bit in the connection, incorrect data will be captured.
+However, despite that equivalent-speed parallel connections have a higher bandwidth, most high-speed device interfaces such as SATA, USB and Ethernet are serial interconnects. The reason for this is because parallel connections are far more difficult to design and operate as the distance between the receiver and transmitter increases. With the incredibly high-speeds of today's communications, unless every wire in a connection is exactly the same length it is possible to have some bits arrive after the others. This means that unless the sampling rate of the receiver is slow enough to account for every bit in the connection, incorrect data will be captured.
 
 Serial connections inherently don't have issues with wire-delay. Because bits are streamed one after another, any delays along the wire have a constant effect on the data and can't cause corruption. This enables serial connections to have a much higher bit rate than parallel, and possibly even a higher total bandwidth.
 
@@ -176,11 +176,11 @@ A software protocol is a device driver that gives meaning to the binary data flo
    
 Some communication interfaces have clearly defined separations between the different standards, protocols, and application layers within them. 
 
-For example, IEEE 802.3 is the base standard for wired Ethernet and contains subclasses for the different speeds and modifications that have been made over the years. Built upon these standards are low-level protocols such as MAC, LLC, and PPP. On these is built IP, and IP is the the base of UDP and TCP which are used for raw data connections on conventional computer networks. 
+For example, IEEE 802.3 is the base standard for wired Ethernet and contains subclasses for the different speeds and modifications that have been made over the years. Built upon these standards are multiple layers of protocols (such as MAC, IP, and TCP) which eventually lead to network sockets that transfer raw data on conventional computer networks. 
 
-An example of a common software protocol used by computer networks is HTML. This format is used to move website data across the Internet, giving the browser application a known way to interpret raw data into something meaningful. 
+An example of a common software protocol used by computer networks is HTML. This format is used to give the browser application a known way to interpret raw text data into a displayed webpage. 
 
-Unfortunately, unlike Ethernet, many low-level interfaces such as those used in embedded systems are much more unclear where the boundaries are. Many of these interfaces have protocols and standards that were designed specifically for each other and are called by the same name. 
+Unfortunately, unlike Ethernet, many low-level interfaces such as those used in embedded systems are less clear about where the boundaries are. Many of these interfaces have protocols and standards that were designed specifically for each other and are called by the same name. 
 Because of this, many documents use the terms standard and protocol interchangeably. 
 
 \section{Common Embedded Interfaces}
@@ -239,7 +239,7 @@ RS-232 is a very flexible protocol in that many of the communication parameters 
 \subsubsection{Baud Rate} 
 Because RS-232 is asynchronous, both the transmitter and receiver are required to operate on a pre-agreed period between bits. This frequency is known as the \textit{Baud Rate} and represents the number of bits per second that is transmitted. 
 
-RS-232 has no checking mechanism to ensure that both devices are tuned to the same Baud. This means that it is possible to receive corrupt data if the baud settings are not configured properly. 
+RS-232 has no checking mechanism to ensure that both devices are tuned to the same baud. This means that it is possible to receive corrupt data if the baud settings are not configured properly. 
 
 In figure \ref{serial_detail} the bit periods are indicated by alternating white and gray shading. 
  
@@ -248,7 +248,7 @@ Although the official RS-232 protocol doesn't have a mechanism to detect the rec
 
 The first signal transition in figure \ref{serial_detail} is the \textit{start bit} of a data frame. The start bit is used to signal a new data frame and synchronize the clock of the receiver to the transmitter.   
 
-The last transition is the \textit{stop bit} which serves as a spacer to give a minimum delay time before the next bit can start. Originally this was designed to allow the mechanical hardware in the teletype machines to move to the next position in the document.
+The last transition is the \textit{stop bit} which serves as a spacer to give a minimum delay time before the next frame can start. Originally this was designed to allow the mechanical hardware in the teletype machines to move to the next position in the document.
 
 The number of start and stop bits within a data frame is configurable. Many serial peripherals allow the user to select the number of framing bits. However, similar to the baud rate, both devices need to agree to interpret the data correctly. 
 
@@ -260,10 +260,7 @@ Most hardware peripherals support appending a \textit{parity} bit to the end of 
 
 Parity can only determine if as single bit in the data has been corrupted, it doesn't provide for any error correction and can fail if an even number of bits are corrupt. Parity isn't used very often anymore because of this limitation. Many devices contain hardware for performing more sophisticated \textit{cyclic redundancy checks} (CRC).  
 
-%\subsubsection{USB-UART Cables}
-%Because it is unlikely that consumer computers have native TTL Serial interfaces, many chip vendors sell devices that act as a protocol bridge between USB and TTL Serial. These are built into cables or small circuit boards and often called USB-Serial or USB-UART converters. 
-%
-%Although these devices are almost universal, this lab suggests using the Adafruit 954 USB-UART cable. This cable directly connects to the USB port of a desktop computer and outputs 3.3V TTL Serial on a 4-pin wire connector. 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{ASCII Text Encoding}
 Old standard for text exchange based on 8-bit characters
@@ -318,10 +315,32 @@ No printf yet... need to build own string transmit, string compare and eventuall
 Kiel provides a miniature version of the c standard library called microlib
 Can configure and use printf with our USART, but won't in this lab. (later labs?)
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \section{Using a USB-UART Cable and the Terminal}
 \subsection{The USB-UART Cable}
-Using the USB-USART cable and Putty Terminal program
-Using and connecting the cable
+Because it is unlikely that consumer computers have native TTL Serial interfaces, many chip vendors sell devices that act as a protocol bridge between USB and TTL Serial. These are built into cables or small circuit boards and often called USB-Serial or USB-UART converters. 
+
+Although these devices are almost universal, this lab suggests using the Adafruit 954 USB-UART cable. This cable directly connects to the USB port of a desktop computer and outputs 3.3V TTL Serial on a 4-pin wire connector. 
+
+Figure \ref{usb_uart} shows an image of the Adafruit 954 cable along with a pinout of the wire headers. To connect the USB-UART cable to the discovery board, first connect the black GND wire on the cable to one of the matching pins on the board. 
+
+Both the USB-UART cable and the USART on the STM32F0 have receive (RX) and transmit (TX) lines. In order to communicate, the transmitter of one device must be connected to the receiver of the other. If necessary, refer to the following when connecting the cable to the board. \\
+
+\parbox{\textwidth} {
+    \centering
+    \textbf{USB-UART Transmit (TX) \textrightarrow  STM32F0 Receive (RX) \\
+    USB-UART Receive (RX) \textrightarrow  STM32F0 Transmit (TX)}
+}
+    
+
+\begin{warning}
+    When connecting the USB-UART cable to the Discovery board, do \textbf{not} connect the 5V output while debugging. 
+    
+    This is because the ST-Link already provides 5V power and unless the two sources have identical voltages, current will flow through the supplies, possibly causing damage. 
+    
+    If both cables are sourced from the same computer then it is unlikely that there will be issues, however, the extra connection is unnecessary.
+\end{warning}
 
 \begin{figure}[]
     \centering\includegraphics[width=0.6\textwidth]{usb_uart}
@@ -330,30 +349,73 @@ Using and connecting the cable
 \end{figure}
 
 \subsection{Finding Installed Ports on Windows}
-Where to find on windows
-windows calls "COM\#" located in device manager
-need steps to find on lab machines.
+When connected to a desktop or laptop computer, the USB-UART cables usually appear as a virtual RS-232 serial ports to the operating system. Although most cables work with all common operating systems, because the Kiel toolchain operates on Windows, this lab will not document the steps to find the virtual port on others. 
 
+Whenever new hardware is installed on Windows, the operating system assigns a device name indicating its type and a unique identifier. Serial ports (virtual or physical) are assigned names beginning with ``COM'' and ending with a number. For example, the third serial port installed on a Windows system would be named ``COM3.''
 
+Unfortunately, it isn't always easy to determine what name the computer has assigned to the connected cable. Windows will create a new device ID for each unique cable that is connected, and has an odd habit of occasionally creating new identifiers for known ones. 
 
+The most reliable method of determining what name has been given to a connected USB-UART cable is to check the Windows device manager. Figure \ref{device_manager} shows the device manager with a connected cable and the assigned name circled. 
 
-\subsection{Using the Putty Terminal Program}
-How to set up Putty
+The following steps can be used to open the device manager.
+
+\begin{enumerate}
+    \item \textbf{Open the Windows Control Panel} -- The control panel can be accessed from the start menu or all applications view of the home screen.
+        \begin{itemize}
+            \item If using Windows 8/10 you will need to access the original control panel not the simplified settings app.
+        \end{itemize} 
+    \item \textbf{Select the Appropriate Category}
+     \begin{itemize}
+        \item Windows 8/10 -- Select \textit{Devices and Printers} Category
+        \item Windows 7 -- Select \textit{System} Category
+    \end{itemize} 
+    \item \textbf{Select the Device Manager} -- The device manager should be located within the selected category.
+\end{enumerate}
+
+Once opening the device manager, you will need to expand the \textit{Ports (COM \& LPT)} category. If the category isn't visible then Windows hasn't recognized the device, the drivers may not have automatically installed. In this event visit the product page on Adafruit.com and manually install the cable driver.  
 
 \begin{figure}[]
     \centering\includegraphics[height=0.45\textheight]{device_manager}
     \caption{Windows device manager with the ports tab expanded.}
     \label{device_manager}
 \end{figure}
+
+\subsection{Using the Putty Terminal Program}
+
+\begin{figure}
+    \centering\includegraphics[height=0.15\textwidth]{putty_icon}
+    \caption{Putty terminal icon}
+\end{figure}
+
+Unlike more sophisticated interfaces, RS-232 doesn't require any device enumeration or addressing. This enables us to interface with serially connected devices by simply typing into a terminal.  
+
+Putty is a multi-protocol terminal primarily used for accessing remote secure-shell (SSH) connections on Unix/Linux based operating systems. However it among with many other terminal applications can be used for serial communication.
+
+
+
+After launching Putty, the main settings window should open as shown in figure \ref{putty}. There are three steps to configure Putty into the proper mode to communicate with the Discovery board. 
+\begin{enumerate}
+    \item Select the serial mode using the \textit{Connection Type} option. 
+    \item Type the port name for the USB-UART cable in the \textit{Serial Line} box.
+    \item Select a baud rate to communicate at in the \textit{Speed} box.
+\end{enumerate}
+
+After configuring Putty, click the \textit{open} button. If an error appears, it's likely you've selected a serial name that doesn't currently exist. In this event open the device manager and check for the connected cable's ID. 
+
+If there aren't any errors, a blank terminal window should open. If you type text within the terminal you shouldn't see any text appearing. This is because the default behavior of the terminal is to only display data that is received from the remove device. (Discovery Board) 
+
+If you connect the transmit and receive lines of the USB-UART cable together using a jumper wire, this forms a loopback interface. A loopback interface simply sends data on the transmit and receives it directly back because the input and outputs are directly connected. In this event you will see the typed text in the terminal. 
+
 \begin{figure}[]
     \centering\includegraphics[height=0.40\textheight]{putty}
-    \caption{Putty serial terminal}
+    \caption{Putty terminal settings screen}
     \label{putty}
 \end{figure}
-mention typing in terminal, no response
-how to test cable/terminal with loopback (wire between RX/TX)
 
-%\section{Lab Assignment}
+
+
+\section{Lab Assignment}
+Lab assignment will be updated after additional review.
 %\subsection{Preparing to use the USART} 
 %Set up pins and connect USB-USART cable
 %Have them test terminal/cable with loopback

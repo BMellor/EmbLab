@@ -260,23 +260,29 @@ Most hardware peripherals support appending a \textit{parity} bit to the end of 
 
 Parity can only determine if as single bit in the data has been corrupted, it doesn't provide for any error correction and can fail if an even number of bits are corrupt. Parity isn't used very often anymore because of this limitation. Many devices contain hardware for performing more sophisticated \textit{cyclic redundancy checks} (CRC).  
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 \subsection{ASCII Text Encoding}
-Old standard for text exchange based on 8-bit characters
-Has 128 characters in 7-bits, the last bit is used for parity
-Some characters have system meanings such as a newline char
-others are non-printing
-Some system chars no longer have much meaning in modern systems
-Was extended to use all 8-bits 
-The original ASCII has since been expanded into the Unicode character standard
-Many different encodings for unicode such as UTF8
-Will be using base ASCII for embedded communication	
+
+Unlike more sophisticated interfaces, RS-232 doesn't require any device enumeration or addressing. This enables us to interface with serially connected devices by simply typing characters into a terminal. Regardless of whether a device is attached to the other end is irrelevant, data will be streamed out the transmit line, and any data received will be printed into the terminal console.  
+
+Streaming binary data across a serial link is straightforward, ideally the same binary values will be received as was transmitted. However, how is text-based data transfered considering that a serial interface only moves raw bytes? 
+
+Over the years, organizations have created standardized ways to encode text characters as numerical values. One of the oldest of these is the \textit{American Standard Code for Information Interchange} (ASCII). 
+
+ASCII originally assigned a 7-bit value to 128 text characters in the English language. These included upper and lower case letters, numbers, common punctuation marks, and a selection of control codes which modify where and how text was printed in the original teletype machines. Initially the 8th bit of the byte-wide ASCII encoding was reserved for parity checking. However, this was later changed to allow an additional 128 characters to be added to the extended encoding. 
+
+Only a few of the original control codes still have meaning in modern systems. Examples of these are the `\\t' (Tab) and `\\n' (Newline) characters. Figure \ref{ascii_table} shows some of the more commonly used English characters and their ASCII numerical values.  
+
+In conventional computing ASCII has largely been replaced by variable-length text encodings such as Unicode. These attempt to include accents and non-Latin characters used by other languages. Although these encodings are far superior to ASCII, they typically keep the old values for the original ASCII characters for backwards compatibility. This means that we can successfully use a serial terminal with our embedded systems while only dealing with decoding the original character set.
+
+While it is possible to include a Unicode decoder in an embedded system, the size and complexity may outweigh the potential benefit. Because of this, all text encodings used in the assignments are assumed to be ASCII.
+
 \begin{figure}[]
     \centering\includegraphics[width=\textwidth]{ascii_table}
     \caption{Subset of the ASCII text encoding standard.}
     \label{ascii_table}
 \end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Introducing the USART}
 What the USART is and why it has its name
@@ -387,11 +393,7 @@ Once opening the device manager, you will need to expand the \textit{Ports (COM 
     \caption{Putty terminal icon}
 \end{figure}
 
-Unlike more sophisticated interfaces, RS-232 doesn't require any device enumeration or addressing. This enables us to interface with serially connected devices by simply typing into a terminal.  
-
 Putty is a multi-protocol terminal primarily used for accessing remote secure-shell (SSH) connections on Unix/Linux based operating systems. However it among with many other terminal applications can be used for serial communication.
-
-
 
 After launching Putty, the main settings window should open as shown in figure \ref{putty}. There are three steps to configure Putty into the proper mode to communicate with the Discovery board. 
 \begin{enumerate}

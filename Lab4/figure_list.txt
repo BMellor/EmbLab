@@ -4,8 +4,8 @@ x- Parallel vs Serial (parallel_serial)
 x- Synchronous vs Asynchronous (synchronous_asynchronous)
 x- Connection Topologies (topologies)
 x- DB9 RS-232 Connector (db9_pinout)
-- RS-232 signal vs TTL-Serial (serial_comparison)
-- TTL-Serial Detail (serial_detail)
+x- RS-232 signal vs TTL-Serial (serial_comparison) combined with detail
+x- TTL-Serial Detail (serial_detail)
 	Indicate start/stop bits
 	Baud rate and oversampling
 	Parity

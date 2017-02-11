@@ -270,7 +270,7 @@ Over the years, organizations have created standardized ways to encode text char
 
 ASCII originally assigned a 7-bit value to 128 text characters in the English language. These included upper and lower case letters, numbers, common punctuation marks, and a selection of control codes which modify where and how text was printed in the original teletype machines. Initially the 8th bit of the byte-wide ASCII encoding was reserved for parity checking. However, this was later changed to allow an additional 128 characters to be added to the extended encoding. 
 
-Only a few of the original control codes still have meaning in modern systems. Examples of these are the `\\t' (Tab) and `\\n' (Newline) characters. Figure \ref{ascii_table} shows some of the more commonly used English characters and their ASCII numerical values.  
+Only a few of the original control codes still have meaning in modern systems. Examples of these are the `\textbackslash{}t' (Tab) and `\textbackslash{}n' (Newline) characters. Figure \ref{ascii_table} shows some of the more commonly used English characters and their ASCII numerical values.  
 
 In conventional computing ASCII has largely been replaced by variable-length text encodings such as Unicode. These attempt to include accents and non-Latin characters used by other languages. Although these encodings are far superior to ASCII, they typically keep the old values for the original ASCII characters for backwards compatibility. This means that we can successfully use a serial terminal with our embedded systems while only dealing with decoding the original character set.
 
@@ -285,11 +285,37 @@ While it is possible to include a Unicode decoder in an embedded system, the siz
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Introducing the USART}
-What the USART is and why it has its name
-Typically used for TTL RS-232
-Modes of operation
-mainly to mention that it has other modes, but we won't discuss them 
+
+The \textit{Universal Synchronous Asynchronous Receiver Transmitter} (USART) as suggested by its name, is one of the most flexible communications peripherals available. Its use is common enough that most embedded devices regardless of their manufacturer have multiple USARTs or at the least a simpler Universal Asynchronous Receiver Transmitter (UART).
+
+Although a USART/UART can be configured into a variety of custom communication modes, they are often used to perform basic TTL serial. Sections 27.2 through 27.4 of the peripheral reference manual document the main features of the USARTs found within the STM32F072. From these sections, it's possible to see that the flexibility of the USART makes it appear as a complex device to configure. 
+
+Luckily, due to the popularity of using the USART as a TTL serial device, many of the options that we would normally need to enable are configured by default. The following sections of this lab manual will attempt to provide an overview of each control register used for TTL serial and the options they configure. 
+
 \subsection{USART Registers}	
+
+\subsubsection{Control register 1 (USART\_CR1)}
+
+\subsubsection{Baud rate register (USART\_BRR)}
+
+\subsubsection{Interrupt and status register (USART\_ISR)}
+
+\subsubsection{}
+
+\subsubsection{}
+
+\subsubsection{}
+
+
+%\begin{itemize}
+%    \item \textbf{} -- 
+%    \item \textbf{} -- 
+%    \item \textbf{} -- 
+%    \item \textbf{} -- 
+%    \item \textbf{} -- 
+%    \item \textbf{} -- 
+%\end{itemize}
+
 Overview of all registers used for RS-232
 Give short description and what each register does (what settings it manages)
 Mention other registers and indicate that they won't need them

@@ -154,6 +154,17 @@ Prelab
 
 	
 Postlab
+
+	which baud has the lowest error at a 8 MHz clock speed. (16x oversampling)
+		1200
+		2400
+		4800
+		9600
+		19200
+		38400
+		57600
+		115200
+	
 	Write a numeric value to ASCII parser (will use in next lab!)
 		have them explain the theory of how it works so they can't just copy from online
 		Bonus points if they can make it work multi-radix (prints correct identifier if not decimal)

@@ -87,21 +87,21 @@
 \chapter{Embedded Communications and the USART}
 
 \section{Communication Between Systems}
-All computing systems regardless of their size and power, are essentially useless if they don't have some way to communicate with the outside world. Even a large supercomputers are unable to perform any meaningful work without some method of introducing new data into the systems, and another to output a result. 
+All computing systems regardless of their size and power, are essentially useless if they do not have some way to communicate with the outside world. Even large supercomputers are unable to perform any meaningful work without some method of introducing new data into the systems, and another to output a result. 
 
-Naturally this applies to embedded systems as well. In fact the majority of embedded peripherals as well as these labs are directed at either capturing or sending information in and out of the system. In the first lab we introduced the GPIO as the most basic method of data transfer. In the second we used the EXTI controller to allow efficient hardware monitoring of GPIO inputs. The third lab used the capture/compare units in a timer peripheral to generate pseudo-analog signals through PWM. 
+Naturally, this applies to embedded systems as well. In fact, the majority of embedded peripherals, as well as these labs, are directed at either capturing or sending information in and out of the system. In the first lab, we introduced the GPIO as the most basic method of data transfer. In the second we used the EXTI controller to allow efficient hardware monitoring of GPIO inputs. The third lab used the capture/compare units in a timer peripheral to generate pseudo-analog signals through PWM. 
 
-This lab introduces the fundamentals of data transfer through digital communication interfaces. These interfaces exist because information is only useful when it can be understood, therefore there must be defined ways of transmitting and interpreting it.
+This lab introduces the fundamentals of data transfer through digital communication interfaces. These interfaces exist because information is only useful when it can be understood. Therefore there must be defined ways of transmitting and interpreting it.
 
 \subsection{Parallel vs Serial}
 
 There are two main schemes, parallel and serial, for moving binary information across electrical connections. These two schemes are opposites of each other and are demonstrated in figure \ref{parallel_serial}. 
 
 \subsubsection{Parallel}
-Parallel interfaces transmit entire blocks of data using multiple wires, with each wire representing the state of a single binary bit. In a parallel system the transmitter sets the logical state of each wire, and the receiver samples all of the connections at a single instant. Parallel interfaces have a \textit{bit-width} which represents how many wires are in the connection, and indicates how many bits are sent at one time. Common bit-widths are powers of 2 to make converting into bytes simple. 
+Parallel interfaces transmit entire blocks of data using multiple wires, with each wire representing the value of a single binary bit. In a parallel system, the transmitter sets the logical state of each wire, and the receiver samples all of the connections at a single instant. Parallel interfaces have a \textit{bit-width} which represents how many wires are in the connection and indicates how many bits are sent at one time. Common bit-widths are powers of 2 to make converting into bytes simple. 
 
 \subsubsection{Serial}
-Serial interfaces use a single wire, and stream a block of data over time by lining up the bits behind each other. In order to properly transmit data, both the transmitter and receiver must agree on the time duration between data bits, known as the interface's \textit{bit/data rate}. A serial transmitter produces periodic transitions on the single data line corresponding to the data to be sent. The receiver samples this data line on a similar period and appends the sampled value to the end of the received data. 
+Serial interfaces use a single wire and stream a block of data over time by lining up the bits behind each other. To properly transmit data, both the transmitter and receiver must agree on the time duration between data bits, known as the interface's \textit{bit/data rate}. A serial transmitter produces periodic transitions on the single data line corresponding to the data to be sent. The receiver samples this data line on a similar period and appends the sampled value to the end of the received data. 
 
 \begin{figure}[]
     \centering\includegraphics[width=\textwidth]{parallel_serial}
@@ -112,19 +112,19 @@ Serial interfaces use a single wire, and stream a block of data over time by lin
 \subsubsection{Interface Bandwidth and Limitations}
 Because parallel connections move entire groups of bits at a time they have a much higher \textit{bandwidth} (throughput) than an equivalent serial connection. Some examples of high-speed parallel connections are the STM32F0's internal device busses (AHB and APB) which connect the ARM processor core to the SRAM, flash memory and other peripherals.
 
-However, despite that equivalent-speed parallel connections have a higher bandwidth, most high-speed device interfaces such as SATA, USB and Ethernet are serial interconnects. The reason for this is because parallel connections are far more difficult to design and operate as the distance between the receiver and transmitter increases. With the incredibly high-speeds of today's communications, unless every wire in a connection is exactly the same length it is possible to have some bits arrive after the others. This means that unless the sampling rate of the receiver is slow enough to account for every bit in the connection, incorrect data will be captured.
+However, despite that equivalent-speed parallel connections have a higher bandwidth, most high-speed device interfaces such as SATA, USB and Ethernet are serial interconnects. The reason for this is because parallel connections are far harder to design and operate as the distance between the receiver and transmitter increases. With the incredibly high speeds of today's communications, unless every wire in a connection is exactly the same length it is possible to have some bits arrive after the others. This means that unless the sampling rate of the receiver is slow enough to account for every bit of the connection, incorrect data will be captured.
 
-Serial connections inherently don't have issues with wire-delay. Because bits are streamed one after another, any delays along the wire have a constant effect on the data and can't cause corruption. This enables serial connections to have a much higher bit rate than parallel, and possibly even a higher total bandwidth.
+Serial connections inherently don't have issues with wire-delay. Because bits are streamed one after another, any delays along the wire have a consistent effect on the data and can't cause corruption. This enables serial connections to have a much higher bit rate than parallel, and possibly even a higher total bandwidth.
 
 \subsection{Synchronous vs Asynchronous}
 
-Regardless of whether an interface is serial or parallel, there must be be a mechanism that synchronizes when the transmitter and receiver updates or samples the connection. Similar to parallel and serial there are two methods, synchronous and asynchronous, of performing this task. These are demonstrated in figure \ref{synchronous_asynchronous}.
+Regardless of whether an interface is serial or parallel, there must be a mechanism that synchronizes when the transmitter and receiver updates or samples the connection. Similar to parallel and serial there are two methods, synchronous and asynchronous, of performing this task. These are demonstrated in figure \ref{synchronous_asynchronous}.
 
 \subsubsection{Synchronous} 
-Synchronous systems use a separate ``clock'' signal which notifies the receiver when to sample.  Often the data capture is synchronized to a transition such as rising or falling-edge. Synchronous systems are often simpler in design but require the extra clock connection.
+Synchronous systems use a separate ``clock'' signal which notifies the receiver when to sample.  Often the data capture is synchronized to a transition such as rising or falling edge. Synchronous systems are often simpler in design but require the extra clock connection.
 
 \subsubsection{Asynchronous}
-Asynchronous systems operate without a physical clock signal. Some methods of asynchronous communication encode a virtual clock within the transitions of the data while others estimate the time intervals that data should be expected to arrive. Because of the lack of a clock signal, asynchronous interconnects are typically more complex and have lower data rates than synchronous ones. 
+Asynchronous systems operate without a physical clock signal. Some methods of asynchronous communication encode a virtual clock within the transitions of the data while others estimate the time intervals that data should be expected to arrive. Because of the lack of a clock signal, asynchronous interconnects are typically more complex and have lower data rates than synchronous ones.  
 
 \begin{figure}[]
     \centering\includegraphics[width=\textwidth]{synchronous_asynchronous}
@@ -133,13 +133,13 @@ Asynchronous systems operate without a physical clock signal. Some methods of as
 \end{figure}
 
 \subsection{Connection Topologies} 
-The topology of a communication interface is how the different devices (nodes) and the connections between them are arranged. Some interfaces are strictly point-to-point, which means that they connect only two devices with direct wires. Other interfaces have topologies which allow networks of devices to be connected together. Figure \ref{topologies} demonstrates a few simple topologies. 
+The topology of a communication interface is how the different devices (nodes) and the connections between them are arranged. Some interfaces are strictly point-to-point, which means that they connect only two devices with direct wires. Other interfaces have topologies which allow networks of devices to be connected. Figure \ref{topologies} demonstrates a few simple topologies. 
 
 \begin{itemize}
     \item \textbf{Daisy-Chain} -- Nodes in a daisy-chained network connect only to their adjacent neighbors. Some are designed to allow data to be passed along to its destination. 
     \item \textbf{Bus/Multi-Drop} -- All nodes on a bus share the same communication lines. This means that only a single device can be transmitting at a time, but all can receive
     \item \textbf{Star} -- All peripheral nodes communicate with a central master node.
-    \item \textbf{Mesh} -- Nodes in a mesh network have arbitrary connections to each other. Some mesh networks are hierarchically ordered, others may be fully-connected.   
+    \item \textbf{Mesh} -- Nodes in a mesh network have arbitrary connections to each other. Some mesh networks are hierarchically ordered, others may be fully-connected.    
 \end{itemize}
 
 
@@ -178,17 +178,18 @@ Some communication interfaces have clearly defined separations between the diffe
 
 For example, IEEE 802.3 is the base standard for wired Ethernet and contains subclasses for the different speeds and modifications that have been made over the years. Built upon these standards are multiple layers of protocols (such as MAC, IP, and TCP) which eventually lead to network sockets that transfer raw data on conventional computer networks. 
 
-An example of a common software protocol used by computer networks is HTML. This format is used to give the browser application a known way to interpret raw text data into a displayed webpage. 
+An example of a common software protocol used by computer networks is HTML. This format is used to give the browser application a known way to interpret raw text data into a displayed web page. 
 
 Unfortunately, unlike Ethernet, many low-level interfaces such as those used in embedded systems are less clear about where the boundaries are. Many of these interfaces have protocols and standards that were designed specifically for each other and are called by the same name. 
 Because of this, many documents use the terms standard and protocol interchangeably. 
+ 
 
 \section{Common Embedded Interfaces}
 The STM32F072 has a generous selection of interface peripherals. These can be seen on the first page summary of the chip datasheet. These interfaces differ widely in operation, complexity, and features; however, they all are serial. 
 
 The three most common serial communication interfaces used in embedded systems are TTL RS-232 (TTL-Serial/UART), Serial Peripheral Interface (SPI), and Inter-Integrated Circuit Bus (I2C). 
 
-This lab teaches the basics of TTL RS-232 in the next few sections. SPI and I2C will be covered in later labs, a brief introduction is included here. 
+This lab teaches the basics of TTL RS-232 in the next few sections. SPI and I2C will be covered in later labs; a brief introduction is included here. 
 
 \begin{itemize}
     \item \textbf{Serial Peripheral Interface (SPI)}
@@ -199,9 +200,10 @@ This lab teaches the basics of TTL RS-232 in the next few sections. SPI and I2C 
     \item \textbf{Inter-Integrated Circuit Bus (I2C)}
     \begin{itemize}
         \item I2C is a low(er) speed synchronous interface designed to allow multiple master devices to share the same set of signal wires. 
-        \item It was primarily designed for low-speed sensors, but newer standards have increased the speed where it is also used for other purposes.
+        \item It was primarily intended for low-speed sensors, but newer standards have increased the speed where it is also used for other purposes.
     \end{itemize}
 \end{itemize}
+
 
 
 \section{Introducing RS-232}
@@ -210,9 +212,9 @@ RS-232 was first introduced in 1962 by the Electronic Industries Alliance as a m
 
 Despite changing its voltage levels and connectors over the years, RS-232 became the standard method of interconnection between computers and accessories until it began to be replaced in the late 1980's by PS2 and later USB. Because of its long and common use, RS-232 is often referred to simply as ``Serial.'' 
 
-RS-232 carries a number of features originally designed for slow dial-up connections. The flow control signals allow the transmitter and receiver to directly notify each other that they are ready with new data or that they need a pause to process what has been transmitted. To ensure that the data signal was able to be read across a potentially long cable, RS-232 uses a wide voltage swing with positive voltages representing a `1' and negative voltages for a `0.' Although the standard allows up to {\textpm}25V many devices use between {\textpm}12V and {\textpm}15V.
+RS-232 contains features originally designed for slow dial-up connections. The flow control signals allow the transmitter and receiver to directly notify each other that they are ready with new data or that they need a pause to process what has been transmitted. To ensure that the data signal was able to be read across a potentially long cable, RS-232 uses a wide voltage swing with positive voltages representing a `1' and negative voltages for a `0.' Although the standard allows up to {\textpm}25V many devices use between {\textpm}12V and {\textpm}15V.
 
-The most recent and common connector used for RS-232 is the 9-pin trapezoidal DE-9 (often mistakenly called DB-9). Figure \ref{db9_pinout} shows a representation and pinout of the connector. While most consumer equipment does not feature a physical serial port anymore, RS-232 is still commonly used for equipment control within science and industry. 
+The most recent and common connector used for RS-232 is the 9-pin trapezoidal DE-9 (often mistakenly called DB-9). Figure \ref{db9_pinout} shows a representation and pinout of the connector. While most consumer equipment does not feature a physical serial port anymore, RS-232 is still commonly used for equipment control within science and industry.  
 
 
 \begin{figure}[]
@@ -222,11 +224,11 @@ The most recent and common connector used for RS-232 is the 9-pin trapezoidal DE
 \end{figure} 
 
 \subsection{Embedded TTL RS-232 (TTL-Serial)}
-Unlike the original legacy hardware, many embedded systems run at a far lower voltages than the  RS-232 {\textpm}25V specification. Additionally, many of these systems can't generate or tolerate negative voltages. Because of this, most systems use a variant of RS-232 called TTL Serial.
+Unlike the original legacy hardware, many embedded systems run at far lower voltages than the  RS-232 {\textpm}25V specification. Additionally, many of these systems cannot generate or tolerate negative voltages. Because of this, most systems use a variant of RS-232 called TTL Serial.
 
 TTL Serial is the same protocol as RS-232 but uses a more reasonable voltage range for signaling. Depending on the power supply that the embedded system operates from, TTL Serial often has a voltage range between 0V and 1.8V to 5V. 
 
-Figure \ref{serial_detail} shows a detailed look into a RS-232 and TTL Serial data frame (packet). As shown, a TTL Serial signal not only has a smaller voltage range, but the waveform is also inverted. 
+Figure \ref{serial_detail} shows a detailed look into an RS-232 and TTL Serial data frame (packet). As shown, a TTL Serial signal not only has a smaller voltage range, but the waveform is also inverted. 
 
 \begin{figure}[]
     \centering\includegraphics[width=\textwidth]{serial_detail}
@@ -234,7 +236,7 @@ Figure \ref{serial_detail} shows a detailed look into a RS-232 and TTL Serial da
     \label{serial_detail}
 \end{figure}
 
-RS-232 is a very flexible protocol in that many of the communication parameters are adjustable by the user. These next few sections discuss important characteristics of a RS-232 frame.  
+RS-232 is a very flexible protocol in that many of the communication parameters are adjustable by the user. These next few sections discuss important characteristics of an RS-232 frame.  
 
 \subsubsection{Baud Rate} 
 Because RS-232 is asynchronous, both the transmitter and receiver are required to operate on a pre-agreed period between bits. This frequency is known as the \textit{Baud Rate} and represents the number of bits per second that is transmitted. 
@@ -242,15 +244,16 @@ Because RS-232 is asynchronous, both the transmitter and receiver are required t
 RS-232 has no checking mechanism to ensure that both devices are tuned to the same baud. This means that it is possible to receive corrupt data if the baud settings are not configured properly. 
 
 In figure \ref{serial_detail} the bit periods are indicated by alternating white and gray shading. 
- 
+
 \subsubsection{Start and Stop Bits}
-Although the official RS-232 protocol doesn't have a mechanism to detect the receiving Baud rate, it does include \textit{framing bits} which alert the hardware about newly arriving data. 
+Although the official RS-232 protocol does not have a mechanism to detect the receiving Baud rate, it does include \textit{framing bits} which alert the hardware about newly arriving data. 
 
 The first signal transition in figure \ref{serial_detail} is the \textit{start bit} of a data frame. The start bit is used to signal a new data frame and synchronize the clock of the receiver to the transmitter.   
 
 The last transition is the \textit{stop bit} which serves as a spacer to give a minimum delay time before the next frame can start. Originally this was designed to allow the mechanical hardware in the teletype machines to move to the next position in the document.
 
 The number of start and stop bits within a data frame is configurable. Many serial peripherals allow the user to select the number of framing bits. However, similar to the baud rate, both devices need to agree to interpret the data correctly. 
+ 
 
 \subsubsection{Data Bits} 
 Typically each frame in RS-232 contains a single data byte. Although uncommon, the standard allows non-byte data sizes between 5 and 9 bits. The baud rate of the signal includes the framing bits within its calculation of total bits per second. This means that the actual useful data transmitted is always less than the theoretical throughput indicated by the baud. 
@@ -258,21 +261,22 @@ Typically each frame in RS-232 contains a single data byte. Although uncommon, t
 \subsubsection{Parity \& Error Checking}
 Most hardware peripherals support appending a \textit{parity} bit to the end of the data. Parity is a method of error checking, where the parity bit is set such that the number of `1' bits in each data frame is always even or odd. If the number of received `1' bits fails to match the expected parity, then the hardware can determine that the transmission has been corrupted. 
 
-Parity can only determine if as single bit in the data has been corrupted, it doesn't provide for any error correction and can fail if an even number of bits are corrupt. Parity isn't used very often anymore because of this limitation. Many devices contain hardware for performing more sophisticated \textit{cyclic redundancy checks} (CRC).  
+Parity can only determine if a single bit in the data has been corrupted, it does not provide for any error correction and can fail if an even number of bits are corrupt. Parity is no longer used often because of this limitation. Many devices contain hardware for performing more sophisticated \textit{cyclic redundancy checks} (CRC).  
+
 
 \subsection{ASCII Text Encoding}
 
-Unlike more sophisticated interfaces, RS-232 doesn't require any device enumeration or addressing. This enables us to interface with serially connected devices by simply typing characters into a terminal. Regardless of whether a device is attached to the other end is irrelevant, data will be streamed out the transmit line, and any data received will be printed into the terminal console.  
+Unlike more sophisticated interfaces, RS-232 does not require any device enumeration or addressing. This enables us to interface with serially connected devices by simply typing characters into a terminal. Regardless of whether a device is attached to the other end is irrelevant, data will be streamed out the transmit line, and any data received will be printed into the terminal console.  
 
-Streaming binary data across a serial link is straightforward, ideally the same binary values will be received as was transmitted. However, how is text-based data transfered considering that a serial interface only moves raw bytes? 
+Streaming binary data across a serial link is straightforward. Ideally, the same binary values will be received as was transmitted. However, how is text-based data transfered considering that a serial interface only moves raw bytes? 
 
 Over the years, organizations have created standardized ways to encode text characters as numerical values. One of the oldest of these is the \textit{American Standard Code for Information Interchange} (ASCII). 
 
-ASCII originally assigned a 7-bit value to 128 text characters in the English language. These included upper and lower case letters, numbers, common punctuation marks, and a selection of control codes which modify where and how text was printed in the original teletype machines. Initially the 8th bit of the byte-wide ASCII encoding was reserved for parity checking. However, this was later changed to allow an additional 128 characters to be added to the extended encoding. 
+ASCII originally assigned a 7-bit value to 128 text characters in the English language. These included upper and lower case letters, numbers, common punctuation marks, and a selection of control codes which modify where and how text was printed in the original teletype machines. Initially, the 8th bit of the byte-wide ASCII encoding was reserved for parity checking. However, this was later changed to allow an additional 128 characters to be added to the extended encoding. 
 
 Only a few of the original control codes still have meaning in modern systems. Examples of these are the `\textbackslash{}t' (Tab) and `\textbackslash{}n' (Newline) characters. Figure \ref{ascii_table} shows some of the more commonly used English characters and their ASCII numerical values.  
 
-In conventional computing ASCII has largely been replaced by variable-length text encodings such as Unicode. These attempt to include accents and non-Latin characters used by other languages. Although these encodings are far superior to ASCII, they typically keep the old values for the original ASCII characters for backwards compatibility. This means that we can successfully use a serial terminal with our embedded systems while only dealing with decoding the original character set.
+In conventional computing, ASCII has largely been replaced by variable-length text encodings such as Unicode. These attempt to include accents and non-Latin characters used by other languages. Although these encodings are far superior to ASCII, they typically keep the old values for the original ASCII characters for backward compatibility. This means that we can successfully use a serial terminal with our embedded systems while only dealing with decoding the original character set.
 
 While it is possible to include a Unicode decoder in an embedded system, the size and complexity may outweigh the potential benefit. Because of this, all text encodings used in the assignments are assumed to be ASCII.
 
@@ -282,13 +286,11 @@ While it is possible to include a Unicode decoder in an embedded system, the siz
     \label{ascii_table}
 \end{figure}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Introducing the USART}
-
 The \textit{Universal Synchronous Asynchronous Receiver Transmitter} (USART) as suggested by its name, is one of the most flexible communications peripherals available. Its use is common enough that most embedded devices regardless of their manufacturer have multiple USARTs or at the least a simpler Universal Asynchronous Receiver Transmitter (UART).
 
-Although a USART/UART can be configured into a variety of custom communication modes, they are often used to perform basic TTL serial. Sections 27.2 through 27.4 of the peripheral reference manual document the main features of the USARTs found within the STM32F072. From these sections, it's possible to see that the flexibility of the USART makes it appear as a complex device to configure. 
+Although a USART/UART can be configured into a variety of custom communication modes, they are often used to perform basic TTL serial. Sections 27.2 through 27.4 of the peripheral reference manual document the main features of the USARTs found within the STM32F072. From these sections, it is possible to see that the flexibility of the USART makes it appear as a complex device to configure. 
 
 Luckily, due to the popularity of using the USART as a TTL serial device, many of the options that we would normally need to enable are configured by default. The following sections of this lab manual will attempt to provide an overview of each control register used for TTL serial and the options they configure. 
 
@@ -300,7 +302,7 @@ Control register 1 enables/disables interrupt conditions and portions of the USA
 Note that many bits within the register have a note in their description stating that they are only editable when the USART peripheral has not yet been enabled for communication. 
 
 \subsubsection{Control register 2 (USART\_CR2)}
-Control register 2 controls signal polarity and routing for the USART. A common and irritating occurrence when designing circuits is the accidental swap of the receive and transmit lines. Through the control registers it is possible to swap the signals within the USART peripheral itself. 
+Control register 2 controls signal polarity and routing for the USART. A common and irritating occurrence when designing circuits is the accidental swap of the receive and transmit lines. Through the control registers, it is possible to swap the signals within the USART peripheral itself. 
 
 Other functions of the control register 2 involve the LIN interface mode and stop bit configuration 
 
@@ -313,16 +315,18 @@ The interrupt and status register is read-only and indicates different operation
 Read the bit descriptions carefully to determine if a flag needs manual attention.
 
 \subsubsection{Interrupt flag clear register (USART\_ICR)}
-For the flags that need manual clearing, or in the event that a certain condition needs to be bypassed, the flag clear register allows the user to clear status flags. 
+For the flags that need manual clearing, or if a certain condition needs to be bypassed, the flag clear register allows the user to clear status flags. 
 
 \subsubsection{Receive data register (USART\_RDR)}
 The receive data register holds the last completely received byte of data. The USART has an internal buffer which holds in-progress receptions until they have completed successfully. If new data is available and the receive register contains unread data, the USART discards the new information and sets an overrun error condition.
 
 \subsubsection{Transmit data register (USART\_TDR)}
-The transmit data register holds the the next byte that is waiting to be transmitted. The USART has an internal buffer which holds data currently in the process of transmission. This means that the transmit data register can be safely filled with new data while the previous is still being processed. The USART will signal an empty transmit register with a flag in the status register. 
+The transmit data register holds the next byte that is waiting to be transmitted. The USART has an internal buffer which holds data currently in the process of transmission. This means that the transmit data register can be safely filled with new data while the previous is still being processed. The USART will signal an empty transmit register with a flag in the status register. 
 
 \subsubsection{Other Control Registers}
-These registers contain advanced configuration options primarily for alternate modes of the USART peripheral. While recommended that you browse through them, you won't need to use these for these lab assignments.
+These registers contain advanced configuration options primarily for alternate modes of the USART peripheral. While recommended that you browse through them, you will not need to use these for these lab assignments.
+
+
 
 \begin{itemize}
     \item \textbf{Control register 3 (USART\_CR3)} -- Manages hardware flow control, DMA, and Smartcard-interface. 
@@ -334,9 +338,10 @@ These registers contain advanced configuration options primarily for alternate m
 \subsection{Configuring the Baud Rate}	
 The baud rate of the USART depends on three factors: the target frequency, the processor clock speed, and the oversampling mode.
 
-Because it is impossible to completely synchronize the clocks between the transmitter and receiver the USART compensates for the inaccuracy by sampling the input much faster than the original baud rate. In the default oversampling mode, the USART samples the input 16-times faster than the bit-rate. It then uses the average of the multiple samples to decide if the bit should be a one or a zero. The USART has the ability to reduce the oversampling to 8x to allow more rapid baud rates to be selected. This mode should only be selected when signal integrity is knows to be very good.
+Because it is impossible to completely synchronize the clocks between the transmitter and receiver the USART compensates for the inaccuracy by sampling the input much faster than the original baud rate. In the default oversampling mode, the USART samples the input 16-times faster than the bit-rate. It then uses the average of the multiple samples to decide if the bit should be a one or a zero. The USART can reduce the oversampling to 8x to allow more rapid baud rates to be chosen. This mode should only be selected when signal integrity is known to be good.
 
 Section 27.5.4 documents in detail the process of calculating the value to be written in the baud rate register. The simple equation used is as follows:
+
 \begin{equation*}
 Baud_{TX/RX} = \frac{f_{CLK}}{USART\_BRR}
 \end{equation*}
@@ -352,16 +357,15 @@ Baud_{TX/RX} = \frac{f_{CLK}}{USART\_BRR}
     
 \end{example}
     
-Most baud rates will not be exactly achievable using the frequencies that the STM32F0's internal oscillator can produce. In general the higher the baud rate in relation to the processor's clock, the greater the error due to clock cycle granularity. When choosing a baud rate, aim for the highest possible standard value that gives reasonable accuracy. Typically most manufacturers recommend an error of less than 2\%. 
+Most baud rates will not be exactly achievable using the frequencies that the STM32F0's internal oscillator can produce. In general the higher the baud rate in relation to the processor's clock, the greater the error due to clock cycle granularity. When choosing a baud rate, aim for the highest possible standard value that gives reasonable accuracy. Typically, most manufacturers recommend an error of less than 2\%. 
 
 
 \subsection{Blocking vs Non-blocking Operation}
-
 There are a number of choices to be made when writing code that interfaces with a communication peripheral. Typically you will be sending more data than will fit in a single transmission frame and you will need to wait while the interface alternates between transmitting and requesting more data.
 
-A simple implementation of such a driver could simply poll the condition flags within the USART peripheral until the device becomes ready to continue. This style of driver is called \textit{blocking,} because it stops the progression of the application thread until the transmission has completed. Depending on the timing of the main application, this may not be a problem. However, a blocking driver can't be used in an interrupt because of the delays it causes. 
+A simple implementation of such a driver could simply poll the condition flags within the USART peripheral until the device becomes ready to continue. This style of driver is called \textit{blocking,} because it stops the progression of the application thread until the transmission has completed. Depending on the timing of the main application, this may not be a problem. However, a blocking driver cannot be used in an interrupt because of the delays it causes. 
 
-\textit{Non-blocking} drivers use interrupts and buffers to store and move data into the peripheral. A non-blocking driver usually executes rapidly because the data to transmit is only moved into a storage butter. When there is data within the storage buffer, an interrupt is enabled which triggers whenever the transmit register within the USART becomes available. 
+\textit{Non-blocking} drivers use interrupts and buffers to store and move data into the peripheral. A non-blocking driver executes rapidly because the data to transmit is only moved into a storage butter. When there is data within the storage buffer, an interrupt is enabled which triggers whenever the transmit register within the USART becomes available. 
 
 The exercises in this lab will mostly use blocking-style drivers. Although non-blocking USART drivers are simpler than many other interfaces, to design one is outside the time scope of a single lab. 
 %\figure \ref{blocking_nonblocking} demonstrates
@@ -392,13 +396,13 @@ Give flowcharts for blocking receive and transmit
     \caption{Flowchart for simple RX/TX communications on the USART.}
     \label{blocking_flowchart}
 \end{figure}
-Explicitly say when they need to wait/check a flag for this condition before moving onward. 
-Don't give actual bit names, but they should be able to use the register descriptions to know where to look
-Give pretty obvious hints as to what they should look for when searching for bits.
+%Explicitly say when they need to wait/check a flag for this condition before moving onward. 
+%Don't give actual bit names, but they should be able to use the register descriptions to know where to look
+%Give pretty obvious hints as to what they should look for when searching for bits.
 \subsubsection{Text Formatting}
-In this lab you will need to write a few functions that perform basic string operations. To do this you will need to how the c-language represents and terminates character strings. 
+This lab requires a few functions that perform basic string operations. To implement these, you will need to how the c-language represents and terminates character strings. 
 
-The c-standard libraries, which provide conventional string operations, are not available for the STM32F0. These expect a more conventional environment with a freely accessible heap and plenty of stack and code space. However there are a few versions of the standard libraries intended for embedded system use. Kiel provides a miniature version of the c-standard library called \textit{microlib} within the ARM:MDK toolchain.
+The c-standard libraries, which provide conventional string operations, are not available for the STM32F0. These expect a more traditional environment with a freely available heap and plenty of stack and code space. However, there are a few versions of the standard libraries intended for embedded system use. Kiel provides a miniature version of the c-standard library called \textit{microlib} within the ARM:MDK toolchain.
 
 If configured properly it becomes possible to use standard printing functions such as \texttt{printf()} with the USART. This may be discussed in later labs. 
 
@@ -409,9 +413,9 @@ Because it is unlikely that consumer computers have native TTL Serial interfaces
 
 Although these devices are almost universal, this lab suggests using the Adafruit 954 USB-UART cable. This cable directly connects to the USB port of a desktop computer and outputs 3.3V TTL Serial on a 4-pin wire connector. 
 
-Figure \ref{usb_uart} shows an image of the Adafruit 954 cable along with a pinout of the wire headers. To connect the USB-UART cable to the discovery board, first connect the black GND wire on the cable to one of the matching pins on the board. 
+Figure \ref{usb_uart} shows an image of the Adafruit 954 cable along with a pinout of the wire headers. To connect the USB-UART cable to the discovery board, first, attach the black GND wire on the cable to one of the matching pins on the board. 
 
-Both the USB-UART cable and the USART on the STM32F0 have receive (RX) and transmit (TX) lines. In order to communicate, the transmitter of one device must be connected to the receiver of the other. If necessary, refer to the following when connecting the cable to the board. \\
+Both the USB-UART cable and the USART on the STM32F0 have receive (RX) and transmit (TX) lines. To communicate, the transmitter of one device must be connected to the receiver of the other. If necessary, refer to the following when connecting the cable to the board. \\
 
 \parbox{\textwidth} {
     \centering
@@ -421,11 +425,11 @@ Both the USB-UART cable and the USART on the STM32F0 have receive (RX) and trans
     
 
 \begin{warning}
-    When connecting the USB-UART cable to the Discovery board, do \textbf{not} connect the 5V output while debugging. 
-    
-    This is because the ST-Link already provides 5V power and unless the two sources have identical voltages, current will flow through the supplies, possibly causing damage. 
-    
-    If both cables are sourced from the same computer then it is unlikely that there will be issues, however, the extra connection is unnecessary.
+When connecting the USB-UART cable to the Discovery board, do \textbf{not} attach the 5V output while debugging. 
+
+This is because the ST-Link already provides 5V power and unless the two sources have equal voltages, current will flow through the supplies, possibly causing damage. 
+
+If both cables are sourced from the same computer, then it is unlikely that there will be issues. However, the extra connection is unnecessary.
 \end{warning}
 
 \begin{figure}[]
@@ -435,13 +439,13 @@ Both the USB-UART cable and the USART on the STM32F0 have receive (RX) and trans
 \end{figure}
 
 \subsection{Finding Installed Ports on Windows}
-When connected to a desktop or laptop computer, the USB-UART cables usually appear as a virtual RS-232 serial ports to the operating system. Although most cables work with all common operating systems, because the Kiel toolchain operates on Windows, this lab will not document the steps to find the virtual port on others. 
+When connected to a desktop or laptop computer, USB-UART cables usually appear as virtual RS-232 serial ports to the operating system. Although most adapters work with all common operating systems, because the Kiel toolchain operates on Windows, this lab does not document the steps to find the virtual port on others. 
 
 Whenever new hardware is installed on Windows, the operating system assigns a device name indicating its type and a unique identifier. Serial ports (virtual or physical) are assigned names beginning with ``COM'' and ending with a number. For example, the third serial port installed on a Windows system would be named ``COM3.''
 
-Unfortunately, it isn't always easy to determine what name the computer has assigned to the connected cable. Windows will create a new device ID for each unique cable that is connected, and has an odd habit of occasionally creating new identifiers for known ones. 
+Unfortunately, it is not always easy to determine what name the computer has assigned to the connected cable. Windows creates a new device ID for each unique cable that is connected and has an odd habit of occasionally creating new identifiers for known ones. 
 
-The most reliable method of determining what name has been given to a connected USB-UART cable is to check the Windows device manager. Figure \ref{device_manager} shows the device manager with a connected cable and the assigned name circled. 
+The most reliable method of determining what name has been given to a connected USB-UART cable is to check the Windows, device manager. Figure \ref{device_manager} shows the device manager with a connected cable and the assigned name circled. 
 
 The following steps can be used to open the device manager.
 
@@ -458,8 +462,7 @@ The following steps can be used to open the device manager.
     \item \textbf{Select the Device Manager} -- The device manager should be located within the selected category.
 \end{enumerate}
 
-Once opening the device manager, you will need to expand the \textit{Ports (COM \& LPT)} category. If the category isn't visible then Windows hasn't recognized the device, the drivers may not have automatically installed. In this event visit the product page on Adafruit.com and manually install the cable driver.  
-
+Once opening the device manager, expand the \textit{Ports (COM \& LPT)} category. If the category is not visible then Windows has not recognized the device, the drivers may not have automatically installed. In this event visit the product page on Adafruit.com and manually install the cable driver.  
 \begin{figure}[]
     \centering\includegraphics[height=0.45\textheight]{device_manager}
     \caption{Windows device manager with the ports tab expanded.}
@@ -479,7 +482,7 @@ Once opening the device manager, you will need to expand the \textit{Ports (COM 
     \label{uvision_logo}
 \end{wrapfigure}
 
-Putty is a multi-protocol terminal primarily used for accessing remote secure-shell (SSH) connections on Unix/Linux based operating systems. However it among with many other terminal applications can be used for serial communication.
+Putty is a multi-protocol terminal primarily used for accessing remote secure-shell (SSH) connections on Unix/Linux based operating systems. However, it among with many other terminal applications can be used for serial communication.
 
 After launching Putty, the main settings window should open as shown in figure \ref{putty}. There are three steps to configure Putty into the proper mode to communicate with the Discovery board. 
 \begin{enumerate}
@@ -488,11 +491,11 @@ After launching Putty, the main settings window should open as shown in figure \
     \item Select a baud rate to communicate at in the \textit{Speed} box.
 \end{enumerate}
 
-After configuring Putty, click the \textit{open} button. If an error appears, it's likely you've selected a serial name that doesn't currently exist. In this event open the device manager and check for the connected cable's ID. 
+After configuring Putty, click the \textit{open} button. If an error appears, it is likely you have selected a serial name that doesn't currently exist. In this event open the device manager and check for the connected cable's ID. 
 
-If there aren't any errors, a blank terminal window should open. If you type text within the terminal you shouldn't see any text appearing. This is because the default behavior of the terminal is to only display data that is received from the remove device. (Discovery Board) 
+If there aren't any errors, a blank terminal window should open. If you type text in the terminal, you should not see any text appearing. This is because the default behavior of the terminal is only to display data that is received from the remove device. (Discovery Board) 
 
-If you connect the transmit and receive lines of the USB-UART cable together using a jumper wire, this forms a loopback interface. A loopback interface simply sends data on the transmit and receives it directly back because the input and outputs are directly connected. In this event you will see the typed text in the terminal. 
+If you connect the transmit and receive lines of the USB-UART cable together using a jumper wire, this forms a loopback interface. A loopback interface sends data on the transmit and receives it immediately back because the input and outputs are directly connected. In this event, you will see the typed text in the terminal. 
 
 \begin{figure}[]
     \centering\includegraphics[height=0.40\textheight]{putty}

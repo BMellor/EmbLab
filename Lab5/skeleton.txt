@@ -1,0 +1,41 @@
+I2C
+-------------------------------------
+
+Introduction to I2C (Keep each section brief)
+	History of I2C
+		Speed modes/options
+	Signal Connections
+	Topology
+	Master/Slave & Multi-Master
+		Introduce Addressing
+
+Electrical Characteristics (put some detail here, lots of questions about the GPIO output modes)
+	Push-Pull vs Open Drain Outputs 
+		(simplified GPIO structure of PP & OD)
+	Why Open-Drain for I2C 
+		(demonstrate multi-master push-pull short circuiting)
+	
+Basic structure of a I2C transaction
+	Start Condition
+	Address Frame
+	Read/Write Bit
+	Slave Acknowledge
+	Data Frames
+	Stop Condition
+	Multi-transaction communication 	
+		Restart Conditions
+		Switching Between Read/Write
+	
+Using the I2C Peripheral 
+	I2C timings and init flowchart pg 626.
+		*Provide 
+
+	tell what to do in a register, not name the bit
+	or name bit but not register
+	
+	
+
+	in i2c lab link and use printf
+
+		
+	

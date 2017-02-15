@@ -367,7 +367,7 @@ A simple implementation of such a driver could simply poll the condition flags w
 
 \textit{Non-blocking} drivers use interrupts and buffers to store and move data into the peripheral. A non-blocking driver executes rapidly because the data to transmit is only moved into a storage butter. When there is data within the storage buffer, an interrupt is enabled which triggers whenever the transmit register within the USART becomes available. 
 
-The exercises in this lab will mostly use blocking-style drivers. Although non-blocking USART drivers are simpler than many other interfaces, to design one is outside the time scope of a single lab. 
+The exercises in this lab will mostly use blocking-style drivers. Although non-blocking drivers for USARTs are simpler than those for most other interfaces, designing one is outside the time scope of a single lab. 
 %\figure \ref{blocking_nonblocking} demonstrates
 %
 %\begin{figure}[]
@@ -375,27 +375,25 @@ The exercises in this lab will mostly use blocking-style drivers. Although non-b
 %    \caption{Blocking and non-blocking drivers.}
 %    \label{blocking_nonblocking}
 %\end{figure}
-\subsection{Performing Basic Transmits and Receives}
+%\subsubsection{Performing Basic Transmits and Receives}
+%
+%Figure \ref{blocking_flowchart} shows a flowchart for simple blocking USART drivers on the STM32F0. These flowcharts will be useful on your lab assignments. 
+%
+%After peripheral initialization, the basic operation of a blocking USART driver follows these basic steps:
+%\begin{enumerate}
+%    \item Application code produces or requests data.
+%    \item Poll until a status bit indicates that the peripheral is ready for the action.
+%    \item Move or load the data into or from the appropriate register.
+%    \item If more data is waiting to be processed, return to step 2.
+%    \item Continue with the original application.
+%\end{enumerate}
 
-Figure \ref{blocking_flowchart} shows a flowchart for simple blocking USART drivers on the STM32F0. These flowcharts will be useful on your lab assignments. 
 
-After peripheral initialization, the basic operation of a blocking USART driver follows these basic steps:
-\begin{enumerate}
-    \item Application code produces or requests data.
-    \item Poll until a status bit indicates that the peripheral is ready for the action.
-    \item Move or load the data into or from the appropriate register.
-    \item If more data is waiting to be processed, return to step 2.
-    \item Continue with the original application.
-\end{enumerate}
-
-
-
-Give flowcharts for blocking receive and transmit
-\begin{figure}[]
-    \centering\includegraphics[width=\textwidth]{blocking_flowchart}
-    \caption{Flowchart for simple RX/TX communications on the USART.}
-    \label{blocking_flowchart}
-\end{figure}
+%\begin{figure}[]
+%    \centering\includegraphics[width=\textwidth]{blocking_flowchart}
+%    \caption{Flowchart for simple RX/TX communications on the USART.}
+%    \label{blocking_flowchart}
+%\end{figure}
 %Explicitly say when they need to wait/check a flag for this condition before moving onward. 
 %Don't give actual bit names, but they should be able to use the register descriptions to know where to look
 %Give pretty obvious hints as to what they should look for when searching for bits.
@@ -495,7 +493,7 @@ After configuring Putty, click the \textit{open} button. If an error appears, it
 
 If there aren't any errors, a blank terminal window should open. If you type text in the terminal, you should not see any text appearing. This is because the default behavior of the terminal is only to display data that is received from the remove device. (Discovery Board) 
 
-If you connect the transmit and receive lines of the USB-UART cable together using a jumper wire, this forms a loopback interface. A loopback interface sends data on the transmit and receives it immediately back because the input and outputs are directly connected. In this event, you will see the typed text in the terminal. 
+Connecting the transmit and receive lines of the USB-UART cable together using a jumper wire forms a loopback interface. A loopback interface sends data on the transmit and receives it immediately back because the input and outputs are directly connected. In this event, you will see the typed text in the terminal. 
 
 \begin{figure}[]
     \centering\includegraphics[height=0.40\textheight]{putty}
@@ -506,19 +504,151 @@ If you connect the transmit and receive lines of the USB-UART cable together usi
 
 
 \section{Lab Assignment}
-Lab assignment will be updated after additional review.
-%\subsection{Preparing to use the USART} 
-%Set up pins and connect USB-USART cable
-%Have them test terminal/cable with loopback
-%Provided code (HAL library?) to enable and test USART, should see string printed in terminal
-%\subsection{Blocking Transmission}	
-%Set up and enable USART to baud rate using registers
-%Transmit single char in loop to terminal
-%Write simple string transmit function and send strings to terminal 
-%mention C-strings, but tell them to look elsewhere for help with those
-%Capture and decode the string using the logic analyzer
-%include screenshot in lab report
-%\subsection{Blocking Reception}			
+Within this lab's exercises you will be connecting the Discovery board to a PC through a USB-UART cable. The first few are designed to familiarize you with the basic concepts of transmitting and receiving data using blocking methods. The final exercise implements a simple character-based command parser which you can use to modify the LEDs on the board.  
+
+\subsection{Preparing to use the USART} 
+Unlike the previous labs these exercises involve multiple devices. This makes debugging slightly more complicated because there are now possible connection and software errors due to the cable and PC. Before writing the embedded application, you may want to perform a loopback test by connecting the transmit and receive lines on the adapter cable to ensure that the serial terminal is communicating with the correct virtual port. 
+
+The STM32F072 has four USART peripherals available; you will need to select one of these to use. Each USART has a small selection of GPIO pins that can be used as its transmit (TX) and receive (RX) signals. Because the split connections on the end of the Adafruit USB-USART cable are fairly short, you will want to choose USART output/input pins that are relatively near a GND pin.
+ 
+ \begin{enumerate}
+     \item Using the chip datasheet, locate pins that connect to TX/RX signals on USART peripherals.
+     \item Choose a set of RX/TX pins that are near enough to a GND connection such that the USB-USART cable's wire ends can reach. 
+     \item Connect the USB-UART transmit (TX) line to the STM32F0's receive (RX) pin. Likewise, connect the  STM32F0's transmit (TX) pin to the USB-UART receive (RX) line.
+     \item Set the selected pins into alternate function mode and program the correct alternate function number into the GPIO AFR registers. 
+     \item Note the USART that the selected pins connect to, this is the peripheral you will be using in the lab exercises.  
+ \end{enumerate}
+
+\begin{warning}
+    Ensure that both the Discovery board and USB-UART cable areunpowered when connecting them to each other. If one device is connected to the PC and the other is not, the transmit line on the powered device will feed voltage into the unpowered device through its input pin. 
+\end{warning}
+
+\subsection{Blocking Transmission}	
+This exercise transmits single characters to the serial terminal on the PC. The character transmission will be handled in the main loop of the application using a blocking method. 
+
+\subsubsection{Initializing the USART}
+The lab manual mentions all of the registers that you may be required to modify throughout these exercises. Because TTL Serial is the default mode of the USART, many of the configuration bits will already be at their desired state. 
+
+\begin{enumerate}
+    \item Enable the system clock to the desired USART in the RCC peripheral.
+    \item Set the Baud rate for communication to be 115200 bits/second. 
+    \begin{itemize}
+        \item You may use the \texttt{HAL\_RCC\_GetHCLKFreq()} function to get the system clock frequency. 
+    \end{itemize}
+    \item The USART starts with portions of the peripheral disabled for low-power use. You will need to enable the transmitter and receiver hardware.
+    \item The USART has a peripheral enable/disable bit in its control register. Once the USART is enabled, many of the configuration bits become read-only.  
+\end{enumerate}
+
+\subsubsection{Transmitting a Character}
+
+Write a function that transmits a single character on the USART. Start with a function declaration that accepts a single character-type variable and returns nothing. Within this function implement the following.
+
+\begin{enumerate}
+    \item Check and wait on the USART status flag that indicates the transmit register is empty.
+    \begin{itemize}
+        \item You can use an empty \texttt{while} loop which exits once the flag is set. 
+        \item Don't use the USART ``BUSY'' status bit. Although this will appear to work properly, this bit depends on multiple conditions and will slow down your transmission. 
+    \end{itemize}
+    \item Write the character into the transmit data register. 
+    \begin{itemize}
+        \item Remember that c-language characters are really numerical values. (ASCII) You can modify and write them to registers without special syntax or type casting.  
+    \end{itemize}
+    \item There is no need to manually clear the status bit, it will be automatically modified by the peripheral when you write into the transmit register.
+\end{enumerate}
+
+Implement some code in the infinite \texttt{while} loop of the main function that calls the character transmit function with a character constant. Feel free to simply loop with delay, or use the button to trigger the transmit. Remember that C-language character constants are surrounded by single quote marks.
+
+\subsubsection{Transmitting a String}
+Unlike many other languages, C has no built-in string data type. Instead, text strings are built from arrays of characters. Because C arrays don't have any method of determining how long they are, string constants that are converted by the compiler into arrays are terminated with a null character. The null character `{\textbackslash}0' has the literal ASCII value of 0 and is used as a sentinel (guard) value to let string processing functions know they've reached the end of the array. 
+
+To transmit strings, begin with a function declaration that accepts an array of characters, either in direct array form or as a pointer. This function should loop over each character in the array and call your character transmit function. 
+
+\begin{enumerate}
+    \item Loop over each element in the character array
+    \item If the current element is not the null character use your character transmit function.
+    \begin{itemize}
+        \item You can increment over the array by using a counter and array index or by incrementing the pointer.
+        \item You can test for the null character by comparing the value against `{\textbackslash}0' or the numerical value 0. (remember characters are numbers in C) 
+        \item If you use the pointer method, remember to dereference when testing for the null value and when calling the character transmit function.
+    \end{itemize} 
+    \item Return when the null character is encountered. 
+\end{enumerate}
+
+Once your string transmit function is complete, change your main application to transmit a short phrase instead of a single character. If you see large amounts of garbage printed in the terminal instead of your phrase, you probably have run off the end of your character array and are displaying the contents of the rest of the STM32F0's memory. 
+
+\subsection{Using a Protocol Analyzer}
+The true benefit of using logic analyzers is when debugging communications between multiple devices. Connect one of the inputs of a logic analyzer to the transmit pin of the USART. You can do this by using the other side of the pin as the USB-UART cable on the Discovery board.
+
+Once connected, set the trigger for falling-edge and capture a section of the transmission. Using the online user guide linked in the lab Canvas page, apply the \textit{Async Serial} protocol analyzer to the captured trace. 
+
+When configuring the protocol analyzer you should be able to leave all of the settings except the baud rate as default. Once the analyzer has been applied, zoom onto the captured trace until you can see the decoded values above the signal transitions. \textbf{Save a screenshot of the decoded signal for your postlab. }
+
+If the analyzer indicates multiple framing errors, you may have the incorrect baud selected. Click the small gear button on the analyzer tab and change the settings to use Autobaud. Hopefully this will detect the baud rate of your signal and decode properly. 
+
+
+
+\subsection{Blocking Reception}
+
+For this exercise you will use the infinite \texttt{while} loop in the main function to read single-character commands typed at the serial terminal on the PC. Your goal is to develop an application that toggles the correct LED whenever the character matching the first letter of the color is pressed. For example, typing an `r' into the terminal would toggle the red LED. 
+
+\begin{enumerate}
+    \item Check and wait on the USART status flag that indicates the receive (read) register is not empty.
+    \begin{itemize}
+        \item You can use an empty \texttt{while} loop which exits once the flag is set or simply check each iteration of the main infinite loop. 
+        \item It may be helpful to carefully read the bit descriptions in the register map.
+    \end{itemize}
+    \item Test the received data and toggle the appropriate LED
+    \begin{itemize}
+        \item The receive register can be read like an ordinary variable. However, the data isn't guaranteed to remain in the register after it has been read once. 
+        \item Unless you use a switch statement you may want to save the value into a local variable and test against that. 
+    \end{itemize}
+    \item Whenever a key is pressed that doesn't match an LED color, print an error message to the console. 
+    \item You will probably want to comment or remove any old transmit code and delay statements from the infinite loop. 
+    \begin{itemize}
+        \item The possible reception rate at 115200 Baud is faster than the minimum delay the HAL library functions are designed to provide. 
+        \item It is possible to lose received data while waiting for a blocking transmit to complete. Where we are only receiving single bytes it is unlikely to cause problems.
+    \end{itemize}
+\end{enumerate}
+
+
+\subsection{Interrupt-Based Reception}
+In this final exercise you will use an interrupt to save the received data when it arrives. Additionally you will expand your simple command parser with more complex behavior.
+
+\begin{enumerate}
+    \item In the USART initialization, enable the receive register not empty interrupt.
+    \item Enable and set the USART interrupt priority in the NVIC.
+    \item Setup the blank interrupt handler.
+    \item Within the handler, save the receive register's value into a global variable.
+    \item Within the handler set a global variable as a flag indicating new data. 
+\end{enumerate} 
+
+Examine the status flag documentation for the receive register not empty interrupt. You should notice that the USART peripheral automatically clears the flag whenever the receive data register is read. Because of this there is no need to manually clear the bit within the interrupt handler. \\
+
+In this exercise we are saving the contents of the receive register to a global variable. Technically since we are only operating on a single byte, using the interrupt doesn't offer us much of a benefit. This is because saving the data to a simple variable doesn't protect us from losing data if the main loop takes too long and the USART overwrites it with a new value. In better non-blocking implementations a buffer is used; possibly raising the new data flag only after a certain character such as a newline is received.\\
+
+Now that the interrupt is ready, you will need to rewrite your main application to check and act on the flag and data variables you set in the interrupt handler. This portion is an open-ended exercise, you are free to implement it in any method you choose as long as the following requirements are fulfilled. 
+
+
+
+\begin{enumerate}
+    \item Your command parser must now accept two character commands.
+    \begin{itemize}
+        \item The first character is a letter matching the one of the LED colors.
+        \item The second character is a number between 0 and 2. 
+        \begin{itemize}
+            \item `0' turns off the LED
+            \item `1' turns on the LED
+            \item `2' toggles the LED
+        \end{itemize}
+    \end{itemize}
+    \item Print a command prompt such as ``CMD?'' when waiting for user input.
+    \item Entering an unknown character prints an error message and restarts back to the beginning.
+    \item On a successful command, print a message about which command was recognized. 
+\end{enumerate}
+
+
+
+
 %Receive single chars in loop from terminal
 %toggle LEDs on char match (r for red etc...)
 %\subsection{Interrupt-Based Reception and Command Parsing}	

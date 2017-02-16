@@ -365,7 +365,7 @@ There are a number of choices to be made when writing code that interfaces with 
 
 A simple implementation of such a driver could simply poll the condition flags within the USART peripheral until the device becomes ready to continue. This style of driver is called \textit{blocking,} because it stops the progression of the application thread until the transmission has completed. Depending on the timing of the main application, this may not be a problem. However, a blocking driver cannot be used in an interrupt because of the delays it causes. 
 
-\textit{Non-blocking} drivers use interrupts and buffers to store and move data into the peripheral. A non-blocking driver executes rapidly because the data to transmit is only moved into a storage butter. When there is data within the storage buffer, an interrupt is enabled which triggers whenever the transmit register within the USART becomes available. 
+\textit{Non-blocking} drivers use interrupts and buffers to store and move data into the peripheral. A non-blocking driver executes rapidly because the data to transmit is only moved into a storage buffer. When there is data within the storage buffer, an interrupt is enabled which triggers whenever the transmit register within the USART becomes available. 
 
 The exercises in this lab will mostly use blocking-style drivers. Although non-blocking drivers for USARTs are simpler than those for most other interfaces, designing one is outside the time scope of a single lab. 
 %\figure \ref{blocking_nonblocking} demonstrates

@@ -38,4 +38,49 @@ Using the I2C Peripheral
 	in i2c lab link and use printf
 
 		
+		
+		
+		
+Functional Description 
+	4 modes (slave TX, slave RX, master TX, master RX)
+	I2c starts in slave mode moves to mater after start
+	returns to slave if lose arbitration or stop 
 	
+Using I2C
+		only need analog filter, no digital filter
+		timings need to be set (section 26.4.5, pg 623)
+			PRESC, SCLDEL, SDADEL, SCLH, SCLL bits in I2C_TIMINGR
+				StmCube can gen in I2C config window <---------------------
+				basic I2C init on page 626
+		
+		I2C Master Mode init, section 26.4.9, page 638
+			• Set Addressing mode (7-bit or 10-bit): ADD10
+			• Slave address to be sent: SADD[9:0]
+			• Transfer direction: RD_WRN
+			• The number of bytes to be transferred: NBYTES[7:0]. If the number of bytes is equal to
+			or greater than 255 bytes, NBYTES[7:0] must initially be filled with 0xFF.
+			The user must then set the START bit in I2C_CR2 register. 
+			
+			Changing all the above bits is not allowed when START bit is set.
+		
+		Peripheral is semi-automatic
+			NBYTES in CR2 is byte counter to transmit in current transaction
+			Disable AUTOEND to manually trigger stop/restart conditions
+			Start and Stops are requsted in CR2
+			
+			TXIS flag is set when ready for next data byte 
+			TC flag is set when end of transmission, ready for stop or restart conditions
+				triggers an interrupt
+			NAK sets NACKF flag and can cause interrupt
+			Transmit Flowchart on page 643
+			
+			
+			
+			
+Prelab Questions
+------------------------------
+Have list of flags, have them look up and tell what they do
+	possibly also find interrupt enable bits that match?
+	
+Put events/steps in order for reading from the gyro (scramble)
+	set slave address, set transfer direction, set number of bytes transferred, set first data, start, set direction, restart, stop (not complete)

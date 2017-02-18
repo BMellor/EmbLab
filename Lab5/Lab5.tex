@@ -178,7 +178,7 @@
 \section{Using the I2C Peripheral}
     The I2C peripheral in the STM32F0 has a high-level interface that hides much of the complexity of the bus protocol. The peripheral can automatically generate a complete I2C transaction once the user configures basic parameters such as the slave address and number of bytes to transfer. 
     
-    While this interface is simpler than the original protocol, the initialization of the I2C peripheral is non-trivial. The I2C peripherals in the STM32F0 support a variety of modes and speeds. Due to the strictness of the I2C standard, incorrectly configured settings may prevent slave devices from responding.
+    While this interface is simpler than the original protocol, the user must be careful when initializing the I2C peripheral. The I2C peripherals in the STM32F0 support a variety of modes and speeds. Due to the strictness of the I2C standard, incorrectly configured settings may prevent slave devices from responding.
 
 \subsection{Peripheral Registers}
     \subsubsection{Control Register 1 (I2C\_CR1)}
@@ -203,10 +203,14 @@
     
     
     \subsubsection{Timing Register (I2C\_TIMINGR)}
-    The I2C peripheral has a very flexible timing system which allows the user to specify slew-rates and sampling delays. These settings can adjust the I2C peripheral to operate reliably under non-ideal conditions. 
+    The I2C peripheral has a very flexible timing system which allows the user to specify slew-rates and sampling delays. These settings can adjust the I2C peripheral to operate reliably under non-ideal conditions. The configurable timings for the peripheral are:
     
-    This flexibility requires the user to derive timing settings from a series of equations documented in section 26.4.5 of the peripheral manual. Fortunately, section 26.4.10 contains tables of pre-calculated parameters which result in standard behavior suitable for most systems.  
-    
+    \begin{itemize}
+        \item \textbf{PRESC} -- This field sets the prescaler used by internal timers within the I2C peripheral. These timers generate the clock signal and control when data is sampled.  
+        \item \textbf{SCLL \& SCLH} -- These fields set the high and low periods of the I2C clock signal (SCL). Because these can be set independently, the I2C peripheral allows the user to specify an asymmetric clock signal. 
+        \item \textbf{SDADEL \& SCLDEL} -- These fields determine the data setup and hold timing used when transmitting and receiving. 
+    \end{itemize}
+
     \subsubsection{Interrupt and Status Register (I2C\_ISR)}
     The read-only interrupt and status register indicates the state of every interrupt condition in the peripheral. These flag bits are also used by blocking drivers to determine the state of the bus.
     
@@ -221,6 +225,25 @@
     The I2C peripheral has additional registers used by the slave and SMBus modes. These should be left in their default state.
 
 \subsection{Initializing the Peripheral}
+    
+    \subsubsection{Setting Peripheral Defaults}
+    
+    The I2C peripherals in the STM32F0 offer a variety of operating modes, and have a large set of status flags used for developing interrupt based non-blocking drivers. Depending on the modes and interrupts used, the initialization of the I2C peripheral can be complex or relatively simple. 
+    
+    This lab requires using only the I2C master mode with blocking operations. Fortunately, these requirements involve minimal initialization. For reference, the complete initialization process is documented in section 26.4.5 of the peripheral reference manual. 
+     
+    \subsubsection{Configuring the Bus Timing}
+    The only real initialization step used by the basic modes in this lab is to set the I2C timing register. The values within this register determine the transmission rate of the interface. 
+    
+    The flexibility of the STM32F0's I2C timing system allows for fine-tuned operation. However, this flexibility requires the user to derive timing constants from series of equations documented in the peripheral manual. 
+    
+    Fortunately, section 26.4.10 contains tables of pre-calculated parameters which result in standard behavior suitable for most systems. Figure \ref{timing} shows the timing table for the default 8MHz processor speed. The columns within this table represent the supported  I2C speed modes. Configuring the bit fields in the TIMINGR to these values will provide acceptable performance.  
+
+    \begin{figure}[]
+        \centering\includegraphics[width=\textwidth]{timing}
+        \caption{Timing table for the default 8MHz processor speed}
+        \label{timing}
+    \end{figure}
 
 
 \subsection{Basic Communication}

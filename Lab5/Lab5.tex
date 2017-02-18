@@ -94,7 +94,7 @@
 
     I\textsuperscript{2}C (Inter-Integrated Circuit), is a synchronous serial communications bus developed by Philips Semiconductor in 1982. It is usually used to connect lower-speed devices such as sensors to a microprocessor. I\textsuperscript{2}C's design enables many devices to share a single data connection and includes addressing so that each device can be individually selected without the requirement for external enable signals.
     
-    There are multiple speed standards for the  I\textsuperscript{2}C interface. The most common of these are the original 100 kHz or the 400 kHz fast-mode.
+    There are multiple speed standards for the  I\textsuperscript{2}C interface. The most common of these are the original 100 kHz and the 400 kHz fast-mode.
 
     \subsection{Design and Topology}
             I\textsuperscript{2}C has a bus topology where every device directly connects to two bidirectional signal lines. Because all devices share a single connection, only one device can transmit at a time, limiting the bus to half-duplex communications. 
@@ -123,7 +123,7 @@
             
             When communicating, a master device produces clock transitions on the SCL line. The slave device uses this clock signal for both receiving and transmitting data. A slave can also hold the clock line low to pause the master if it needs more time for processing. This process is called clock-stretching
             
-            Depending on the direction of communication, both the master and slave produce data on the shared SDA line. When receiving data, both slave and master devices acknowledge each communication frame to notify the other that the data was received.  Both the clock and data lines use an open-drain I/O structure, this is discussed in section \ref{electrical}. 
+            Depending on the direction of communication, both the master and slave produce data on the shared SDA line. When receiving, both slave and master devices acknowledge each communication frame to notify the other that the data was received.  Both the clock and data lines use an open-drain I/O structure, this is discussed in section \ref{electrical}. 
             
             %Discuss the SDA and SCL lines, mention open-drain
     \subsection{Electrical Characteristics} \label{electrical}
@@ -135,9 +135,9 @@
         \end{figure}
         
         \subsubsection{Push-Pull vs Open Drain Outputs}
-        Figure \ref{output_circuit} shows a simplified representation of output circuity for \textit{push-pull} and \textit{open-drain} outputs. 
+        Figure \ref{output_circuit} shows a simplified representation of the circuity for \textit{push-pull} and \textit{open-drain} outputs. 
         
-        Push-Pull Outputs have drive transistors that allow the device to push the output line ``high'' by connecting to the supply rail of the device, as well as pulling it ``low'' by connecting to ground. A push-pull output can source or sink current depending on the voltage of the connected circuitry. 
+        Push-Pull Outputs have drive transistors that allow the device to push the output line ``high'' by connecting to the supply rail of the device, as well as pulling it ``low'' by connecting to ground. A push-pull output can source or sink current depending on the voltage of the external system. 
         
         Open-Drain Outputs have a single transistor and can only pull the output to a low state. Because of this, open-drain systems require an external influence such as a pull-up resistor to return the line to a high state when no device is pulling it low. 
         
@@ -146,7 +146,7 @@
             
             Open-drain systems inherently cannot cause damaging faults because all devices can only pull the signal line low. The pull-up resistor limits the total current flowing through the system, and the most severe error that can occur is corrupted data. 
 
-\section{Structure of an I2C Transaction}	
+\section{Structure of an I\textsuperscript{2}C Transaction}	
     %Briefly mention overview of data transfer & sampling.
     
     \begin{figure}[]
@@ -156,7 +156,7 @@
     \end{figure}
     
     I\textsuperscript{2}C uses a strict protocol that defines data transfer as a series of \textit{frames} and conditions.     
-    Transmitted data is broken up into two types of frame: an address frame, where the master indicates the slave to which the data is sent and one or more data frames. Data is placed on the SDA line while the clock (SCL) is pulled low, and is sampled during the clock's rising edge. The time between the clock transition and data read/write is determined by the devices on the bus and the configuration of the I2C peripheral. An example I\textsuperscript{2}C transaction is shown in figure \ref{overview}. 
+    Transmitted data is broken up into two types of frame: an address frame, where the master indicates the slave to which the data is sent and one or more data frames. Data is placed on the SDA line while the clock (SCL) is pulled low, and is sampled during the clock's rising edge. The time between the clock transition and data read/write is determined by the devices on the bus and the configuration of the I\textsuperscript{2}C peripheral. An example I\textsuperscript{2}C transaction is shown in figure \ref{overview}. 
     
     \subsection{Address Frame}
         \subsubsection{Start Condition}
@@ -175,24 +175,24 @@
         
         In the case where chained transactions are desired, ending the current transaction with a stop condition would release the bus and allow other devices to steal control before the master begins again. To prevent this, devices are allowed to issue new start conditions without properly ending the previous transaction with a stop. This event is known as a \textit{restart} condition. 
 
-\section{Using the I2C Peripheral}
-    The I2C peripheral in the STM32F0 has a high-level interface that hides much of the complexity of the bus protocol. The peripheral can automatically generate a complete I2C transaction once the user configures basic parameters such as the slave address and number of bytes to transfer. 
+\section{Using the I\textsuperscript{2}C Peripheral}
+    The I\textsuperscript{2}C peripheral in the STM32F0 has a high-level interface that hides much of the complexity of the bus protocol. The peripheral can automatically generate a complete I\textsuperscript{2}C transaction once the user configures basic parameters such as the slave address and number of bytes to transfer. 
     
-    While this interface is simpler than the original protocol, the user must be careful when initializing the I2C peripheral. The I2C peripherals in the STM32F0 support a variety of modes and speeds. Due to the strictness of the I2C standard, incorrectly configured settings may prevent slave devices from responding.
+    While this interface is simpler than the original protocol, the user must be careful when initializing the peripheral. The I\textsuperscript{2}C peripherals in the STM32F0 support a variety of modes and speeds. Due to the strictness of the I\textsuperscript{2}C standard, incorrectly configured settings may prevent slave devices from responding.
 
 \subsection{Peripheral Registers}
     \subsubsection{Control Register 1 (I2C\_CR1)}
-    The control register 1 manages the overall operation of the I2C peripheral. These settings fall into a few different categories:
+    The control register 1 manages the overall operation of the I\textsuperscript{2}C peripheral. These settings fall into a few different categories:
     \begin{itemize}
-        \item \textbf{SMBus Configuration} -- SMBus is a more restrictive protocol designed for greater reliability than conventional I2C. Configuration bits and registers related to SMBus should be left at default. 
-        \item \textbf{Slave Mode Configuration} -- The I2C peripheral operates as both a slave and master device. Since we won't be using a multi-master network for this lab, these settings can be ignored. 
-        \item \textbf{Noise Filters} -- The I2C peripheral has both analog and digital noise filters. The analog filter is enabled by default and is sufficient for normal operation. 
-        \item \textbf{Interrupt Enables} -- There are many I2C conditions that can generate interrupts. This register controls interrupts for events such as transmission errors, completed transmissions, and when the bus is free. 
-        \item \textbf{Peripheral Enable} -- The I2C peripheral must be enabled in this register after it is initialized. Many initialization settings are protected once this bit is enabled.
+        \item \textbf{SMBus Configuration} -- SMBus is a more restrictive protocol designed for greater reliability than conventional I\textsuperscript{2}C. Configuration bits and registers related to SMBus should be left at default. 
+        \item \textbf{Slave Mode Configuration} -- The I\textsuperscript{2}C peripheral operates as both a slave and master device. Since we won't be using a multi-master network for this lab, these settings can be ignored. 
+        \item \textbf{Noise Filters} -- The I\textsuperscript{2}C peripheral has both analog and digital noise filters. The analog filter is enabled by default and is sufficient for normal operation. 
+        \item \textbf{Interrupt Enables} -- There are many I\textsuperscript{2}C conditions that can generate interrupts. This register controls interrupts for events such as transmission errors, completed transmissions, and when the bus is free. 
+        \item \textbf{Peripheral Enable} -- The I\textsuperscript{2}C peripheral must be enabled in this register after it is initialized. Many initialization settings are protected once this bit is enabled.
     \end{itemize}  
     
     \subsubsection{Control Register 2 (I2C\_CR2)}
-    The control register 2 contains settings for the current I2C transaction. As such, this register is used whenever communicating with a slave device. Understanding this register is critical to using the peripheral; bits that will be used heavily during the lab exercises are described here. 
+    The control register 2 contains settings for the current I\textsuperscript{2}C transaction. As such, this register is used whenever communicating with a slave device. Understanding this register is critical to using the peripheral; bits that will be used heavily during the lab exercises are described here. 
     \begin{itemize}
         \item \textbf{AUTOEND} -- When set, the peripheral will automatically generate a stop condition at the end of a transaction. This setting is undesirable when performing chained writes and reads as will be required in the lab assignment. 
         \item \textbf{NBYTES[7:0]} -- This group of 8-bits set the number of bytes to transmit in the next transaction. These must be modified using bitwise operations to prevent overwriting the rest of the register. 
@@ -203,11 +203,11 @@
     
     
     \subsubsection{Timing Register (I2C\_TIMINGR)}
-    The I2C peripheral has a very flexible timing system which allows the user to specify slew-rates and sampling delays. These settings can adjust the I2C peripheral to operate reliably under non-ideal conditions. The configurable timings for the peripheral are:
+    The I\textsuperscript{2}C peripheral has a very flexible timing system which allows the user to specify slew-rates and sampling delays. These settings can adjust the peripheral to operate reliably under non-ideal conditions. The configurable timings for the peripheral are:
     
     \begin{itemize}
-        \item \textbf{PRESC} -- This field sets the prescaler used by internal timers within the I2C peripheral. These timers generate the clock signal and control when data is sampled.  
-        \item \textbf{SCLL \& SCLH} -- These fields set the high and low periods of the I2C clock signal (SCL). Because these can be set independently, the I2C peripheral allows the user to specify an asymmetric clock signal. 
+        \item \textbf{PRESC} -- This field sets the prescaler used by internal timers within the I\textsuperscript{2}C peripheral. These timers generate the clock signal and control when data is sampled.  
+        \item \textbf{SCLL \& SCLH} -- These fields set the high and low periods of the clock signal (SCL). Because these can be set independently, the peripheral allows the user to specify an asymmetric clock. 
         \item \textbf{SDADEL \& SCLDEL} -- These fields determine the data setup and hold timing used when transmitting and receiving. 
     \end{itemize}
 
@@ -222,31 +222,31 @@
     These registers are written and read by the user application during use of the peripheral. 
     
     \subsubsection{Other Peripheral Registers}
-    The I2C peripheral has additional registers used by the slave and SMBus modes. These should be left in their default state.
+    The I\textsuperscript{2}C peripheral has additional registers used by the slave and SMBus modes. These should be left in their default state.
 
 \subsection{Initializing the Peripheral}
    
-    The I2C peripherals in the STM32F0 offer a variety of operating modes, and have a large set of status flags used for developing interrupt based non-blocking drivers. Depending on the modes and interrupts used, the initialization of the I2C peripheral can be complex or relatively simple. The complete initialization process is documented in section 26.4.5 of the peripheral reference manual. 
+    The I\textsuperscript{2}C peripherals in the STM32F0 offer a variety of operating modes, and have a large set of status flags used for developing interrupt based non-blocking drivers. Depending on the modes and interrupts used, the initialization of the peripheral can be complex or relatively simple. The complete initialization process is documented in section 26.4.5 of the peripheral reference manual. 
     
-    This lab requires only the I2C master mode using blocking operations; these involve minimal initialization and can be configured by the following steps.
+    This lab requires only the I\textsuperscript{2}C master mode using blocking operations; these involve minimal initialization and can be configured by the following steps.
     
     \begin{itemize}
-        \item Enable and configure the GPIO output pins used by the I2C peripheral to alternate function mode.
+        \item Enable and configure the GPIO output pins used by the I\textsuperscript{2}C peripheral to alternate function mode.
         \begin{itemize}
             \item Set the pin's output type to be \underline{\textit{open-drain}} in the GPIOx\_OTYPER register. 
             \item Set the appropriate alternate function number in the GPIOx\_AFR registers. 
         \end{itemize}
-        \item Enable the I2C system clock using the RCC peripheral.
+        \item Enable the I\textsuperscript{2}C system clock using the RCC peripheral.
         \item Configure bus timing using the I2Cx\_TIMINGR.
-        \item Enable the I2C peripheral using the PE bit in the CR1 register.
+        \item Enable the I\textsuperscript{2}C peripheral using the PE bit in the CR1 register.
     \end{itemize} 
      
     \subsubsection{Configuring the Bus Timing}
-    The only system-wide initialization step used by the basic modes in this lab is to set the I2C timing register. The values within this register determine the transmission rate of the interface. 
+    The only system-wide initialization step used by the basic modes in this lab is to set the I\textsuperscript{2}C timing register. The values within this register determine the transmission rate of the interface. 
     
-    The flexibility of the STM32F0's I2C timing system allows for fine-tuned operation. However, this flexibility requires the user to derive timing constants from series of equations documented in the peripheral manual. 
+    The flexibility of the STM32F0's I\textsuperscript{2}C timing system allows for fine-tuned operation. However, this flexibility requires the user to derive timing constants from series of equations documented in the peripheral manual. 
     
-    Fortunately, section 26.4.10 contains tables of pre-calculated parameters which result in standard behavior suitable for most systems. Figure \ref{timing} shows the timing table for the default 8MHz processor speed. The columns within this table represent the supported  I2C speed modes. Configuring the bit fields in the TIMINGR to these values provides acceptable performance.  
+    Fortunately, section 26.4.10 contains tables of pre-calculated parameters which result in standard behavior suitable for most systems. Figure \ref{timing} shows the timing table for the default 8MHz processor speed. The columns within this table represent the supported  I\textsuperscript{2}C speed modes. Configuring the bit fields in the TIMINGR to these values provides acceptable performance.  
 
     \begin{figure}[]
         \centering\includegraphics[width=\textwidth]{timing}
@@ -255,15 +255,15 @@
     \end{figure}
 
     \subsubsection{Enabling the Peripheral}
-    Before the I2C interface can be used the peripheral enable (PE) bit must be set in the CR1 register. Setting this bit locks all of the system-wide configuration bits and registers to prevent accidental modification during transmission. Clearing the PE bit after it has been set performs a peripheral reset and clears all configuration registers. 
+    Before the I\textsuperscript{2}C interface can be used the peripheral enable (PE) bit must be set in the CR1 register. Setting this bit locks all of the system-wide configuration bits and registers to prevent accidental modification during transmission. Clearing the PE bit after it has been set performs a peripheral reset and clears all configuration registers. 
     
-    Transaction specific options found in the CR2 register are not locked by the PE bit. These are modified at the beginning of each I2C transaction to set parameters such as the slave address.
+    Transaction specific options found in the CR2 register are not locked by the PE bit. These are modified at the beginning of each transaction to set parameters such as the slave address.
 
 \subsection{Basic Communication}
     The processes of writing and reading from a slave device are very similar. Every communication follows a few simple steps: setting transaction parameters, starting the peripheral, waiting on status flags, and looping to previous steps depending on the flags set and length of data. Figure \ref{trans_flow} contains a flowchart demonstrating the general process of using the master mode with blocking operations. 
 
     \subsubsection{Setting up the Transaction}
-        Each I2C transaction is initialized by completing the following steps in the CR2 register:
+        Each I\textsuperscript{2}C transaction is initialized by completing the following steps in the CR2 register:
         \begin{enumerate}
             \item Set the slave address in the SADD[7:1] bit field. 
             \item Set the number of data byte to be transmitted in the NBYTES[7:0] bit field.
@@ -295,7 +295,7 @@
     \end{example}
     
     \subsubsection{Transmitting to a Slave Device}
-        Once a transaction has been initiated, the driver must wait until the I2C peripheral has transmitted the address frame and received an acknowledgment from the slave device. This is accomplished by polling on both the \textit{Transmit Interrupt Status} (TXIS) and \textit{Not Acknowledge Received Flag} (NACKF) status bits. 
+        Once a transaction has been initiated, the driver must wait until the I\textsuperscript{2}C peripheral has transmitted the address frame and received an acknowledgment from the slave device. This is accomplished by polling on both the \textit{Transmit Interrupt Status} (TXIS) and \textit{Not Acknowledge Received Flag} (NACKF) status bits. 
         
         Depending on which flag bit is set determines the following operation:
         \begin{itemize}

@@ -24,9 +24,21 @@
 		\subsubsection{Restart Condition}
 				
 \section{Using the I2C Peripheral}
+	\subsection{Peripheral Registers}
 
-
-
+	\subsection{Initializing the Peripheral}
+  
+	
+	\subsection{Basic Communication}
+	\subsection{Transmitting to a Slave Device}
+	\subsubsection{Setting up the Transaction}
+	
+	\subsubsection{Writing Multiple Bytes}
+	
+	\subsubsection{Receiving from a Slave Device}
+	\subsubsection{Starting a Read after a Write}
+	\subsubsection{Reading Multiple Bytes}
+	
 \section{Using the L3GD20 Digital Gyroscope}
 
 

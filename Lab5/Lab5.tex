@@ -225,19 +225,17 @@
     The I2C peripheral has additional registers used by the slave and SMBus modes. These should be left in their default state.
 
 \subsection{Initializing the Peripheral}
+   
+    The I2C peripherals in the STM32F0 offer a variety of operating modes, and have a large set of status flags used for developing interrupt based non-blocking drivers. Depending on the modes and interrupts used, the initialization of the I2C peripheral can be complex or relatively simple. The complete initialization process is documented in section 26.4.5 of the peripheral reference manual. 
     
-    \subsubsection{Setting Peripheral Defaults}
-    
-    The I2C peripherals in the STM32F0 offer a variety of operating modes, and have a large set of status flags used for developing interrupt based non-blocking drivers. Depending on the modes and interrupts used, the initialization of the I2C peripheral can be complex or relatively simple. 
-    
-    This lab requires using only the I2C master mode with blocking operations. Fortunately, these requirements involve minimal initialization. For reference, the complete initialization process is documented in section 26.4.5 of the peripheral reference manual. 
+    This lab requires only the I2C master mode using blocking operations; these involve minimal initialization. 
      
     \subsubsection{Configuring the Bus Timing}
-    The only real initialization step used by the basic modes in this lab is to set the I2C timing register. The values within this register determine the transmission rate of the interface. 
+    The only system-wide initialization step used by the basic modes in this lab is to set the I2C timing register. The values within this register determine the transmission rate of the interface. 
     
     The flexibility of the STM32F0's I2C timing system allows for fine-tuned operation. However, this flexibility requires the user to derive timing constants from series of equations documented in the peripheral manual. 
     
-    Fortunately, section 26.4.10 contains tables of pre-calculated parameters which result in standard behavior suitable for most systems. Figure \ref{timing} shows the timing table for the default 8MHz processor speed. The columns within this table represent the supported  I2C speed modes. Configuring the bit fields in the TIMINGR to these values will provide acceptable performance.  
+    Fortunately, section 26.4.10 contains tables of pre-calculated parameters which result in standard behavior suitable for most systems. Figure \ref{timing} shows the timing table for the default 8MHz processor speed. The columns within this table represent the supported  I2C speed modes. Configuring the bit fields in the TIMINGR to these values provides acceptable performance.  
 
     \begin{figure}[]
         \centering\includegraphics[width=\textwidth]{timing}
@@ -245,16 +243,53 @@
         \label{timing}
     \end{figure}
 
+    \subsubsection{Enabling the Peripheral}
+    Before the I2C interface can be used the peripheral enable (PE) bit must be set in the CR1 register. Setting this bit locks all of the system-wide configuration bits and registers to prevent accidental modification during transmission. Clearing the PE bit after it has been set performs a peripheral reset and clears all configuration registers. 
+    
+    Transaction specific options found in the CR2 register are not locked by the PE bit. These are modified at the beginning of each I2C transaction to set parameters such as the slave address.
 
 \subsection{Basic Communication}
-\subsubsection{Transmitting to a Slave Device}
-\subsubsection{Setting up the Transaction}
+    The processes of writing and reading from a slave device are very similar. Every communication follows a few simple steps: setting transaction parameters, starting the peripheral, waiting on status flags, and looping to previous steps depending on the flags set and length of data. Figure \ref{com_flow} contains a flowchart demonstrating the general process of using the master mode with blocking operations. 
 
-\subsubsection{Writing Multiple Bytes}
+    \subsubsection{Setting up the Transaction}
+        Each I2C transaction is initialized by completing the following steps in the CR2 register:
+        \begin{enumerate}
+            \item Set the slave address in the SADD[7:1] bit field. 
+            \item Set the number of data byte to be transmitted in the NBYTES[7:0] bit field.
+            \item Configure the RD\_WRN to indicate a read/write operation.
+            \item Setting the START bit to begin the address frame. 
+        \end{enumerate}
+    
+    \begin{warning}
+        Set the START bit in the CR2 register \underline{after} configuring the slave address and transaction length. Similar to how the PE bit locks system-wide configurations, setting the START bit locks the transaction parameters until the peripheral has completed the address frame. 
+    \end{warning}
+    
+    \begin{example}[Setting the SADD and NBYTES Bit Fields]
+        \code{./Files/setup.c}{Setting the SADD and NBYTES bit fields using bitwise operations}{setup}
+        Since the SADD and NBYTES bit fields are not within their own registers, they cannot be directly assigned without overwriting the remainder of the CR2 register. Because of this, bitwise operations are required to first clear and then set the bit fields. 
+        
+        Rather than directly assigning each individual bit, it is helpful to use the desired value as a shifted bitmask directly. Figure \ref{setup} contains example code which demonstrates how to clear and set these bit fields using bitwise operations. 
+    \end{example}
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    \subsubsection{Transmitting to a Slave Device}
+    
+    
+    \subsubsection{Receiving from a Slave Device}
+    
+    
+    
+    \subsubsection{Restarting and Changing Direction}
 
-\subsubsection{Receiving from a Slave Device}
-\subsubsection{Starting a Read after a Write}
-\subsubsection{Reading Multiple Bytes}
 
 
 \end{document}

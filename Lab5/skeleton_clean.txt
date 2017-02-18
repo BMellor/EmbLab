@@ -1,0 +1,33 @@
+\section{Introduction to I2C}
+	Brief origin of and general uses of I2C
+	\subsection{Design and Topology}
+		[shared figure for topology, signals, and master/slave]
+		Discuss the bus topology (also half-duplex), master/slave & multi-master, device addressing
+		\subsubsection{Signal Connections}
+			Discuss the SDA and SCL lines, mention open-drain
+	\subsection{Electrical Characteristics}
+		[figure contrasting push-pull and open-drain I/O structures]
+		\subsubsection{Push-Pull vs Open Drain Outputs}
+		\subsubsection{Why Open-Drain for I2C}
+			Mention multi-chip output conflict
+		\subsubsection{Pull-Up Resistors & Operating Speed}
+			Mention speed grades for I2C
+			Mention how pull-up resistors and capacitance affect speed of bus
+\section{Structure of an I2C Transaction}	
+	Briefly mention overview of data transfer & sampling.
+	\subsection{Address Frame}
+		\subsubsection{Start Condition}
+		\subsubsection{Addressing and the Read/Write Bit}
+		\subsubsection{Slave Acknowledgment}
+	\subsection{Data Frame}
+		\subsubsection{Stop Condition}
+		\subsubsection{Restart Condition}
+				
+\section{Using the I2C Peripheral}
+
+
+
+\section{Using the L3GD20 Digital Gyroscope}
+
+
+\section{Lab Assignment}

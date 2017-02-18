@@ -1,19 +1,20 @@
 I2C
 -------------------------------------
 
+The Inter-Integrated Circuit Communications Interface
+
 Introduction to I2C (Keep each section brief)
 	History of I2C
 		Speed modes/options
 	Signal Connections
-	Topology
+	Topology (use single figure for signals, topology and master/slave)
 	Master/Slave & Multi-Master
 		Introduce Addressing
-
-Electrical Characteristics (put some detail here, lots of questions about the GPIO output modes)
-	Push-Pull vs Open Drain Outputs 
-		(simplified GPIO structure of PP & OD)
-	Why Open-Drain for I2C 
-		(demonstrate multi-master push-pull short circuiting)
+	Electrical Characteristics (put some detail here, lots of questions about the GPIO output modes)
+		Push-Pull vs Open Drain Outputs 
+			(simplified GPIO structure of PP & OD)
+		Why Open-Drain for I2C 
+			describe why multi-master with push-pull short circuiting)
 	
 Basic structure of a I2C transaction
 	Start Condition
@@ -26,17 +27,57 @@ Basic structure of a I2C transaction
 		Restart Conditions
 		Switching Between Read/Write
 	
-Using the I2C Peripheral 
+Using the I2C Peripheral
+	Overview of Operation (brief, explain high-level interface)
+ 
+	Peripheral Registers 
+		List not describe the things that each register does, make easier to skim	
+		
+	Initializing the Peripheral 
+		Brief discussion of process, what needs to be done
+		Majority of focus in list or flowchart
+		Setting the Timing register
+			include table from datasheet
+			calculate the actual timing register value (repeat in the assignment itself)
+
+	Transmitting to a Slave
+		Mostly a list of steps, reference flowchart
+	Reading from a Slave
+		Mostly a list of steps, reference flowchart
+
+Using the Gyro
+	Capabilities
+	Registers
+	Accessing the Registers over I2C
+	Initialization
+		
+		
+Lab Assignment
+	Read the ID register of the Gyro
+		Sub-checkoffs for portions of logic capture
+		Get logic analyzer trace of successful transaction.
+			Start condition, address frame (and slave ACK)
+			Transmit request for ID register
+			Restart condition, read data, and stop.
+	
+	Initialize the gryo and read data
+		print over USART?
+	
+	Demonstrate the working tilt detect with the LEDs 
+		
+
+
+
+
+
+
+
+
+
+
+		
 	I2C timings and init flowchart pg 626.
 		*Provide 
-
-	tell what to do in a register, not name the bit
-	or name bit but not register
-	
-	
-
-	in i2c lab link and use printf
-
 		
 		
 		
@@ -50,7 +91,8 @@ Using I2C
 		only need analog filter, no digital filter
 		timings need to be set (section 26.4.5, pg 623)
 			PRESC, SCLDEL, SDADEL, SCLH, SCLL bits in I2C_TIMINGR
-				StmCube can gen in I2C config window <---------------------
+				StmCube can gen in I2C config window 
+				there is table of pre-config values on page 
 				basic I2C init on page 626
 		
 		I2C Master Mode init, section 26.4.9, page 638
@@ -66,15 +108,26 @@ Using I2C
 		Peripheral is semi-automatic
 			NBYTES in CR2 is byte counter to transmit in current transaction
 			Disable AUTOEND to manually trigger stop/restart conditions
-			Start and Stops are requsted in CR2
+			Start and Stops are requested in CR2
 			
-			TXIS flag is set when ready for next data byte 
-			TC flag is set when end of transmission, ready for stop or restart conditions
-				triggers an interrupt
-			NAK sets NACKF flag and can cause interrupt
-			Transmit Flowchart on page 643
+			Transmit
+				TXIS flag is set when ready for next data byte 
+				TC flag is set when end of transmission, ready for stop or restart conditions
+					triggers an interrupt
+				NAK sets NACKF flag and can cause interrupt
+				Transmit Flowchart on page 643
+			
+			Recieve
+				
 			
 			
+			
+			
+	tell what to do in a register, not name the bit
+	or name bit but not register
+	
+	
+					
 			
 			
 Prelab Questions
@@ -83,4 +136,12 @@ Have list of flags, have them look up and tell what they do
 	possibly also find interrupt enable bits that match?
 	
 Put events/steps in order for reading from the gyro (scramble)
-	set slave address, set transfer direction, set number of bytes transferred, set first data, start, set direction, restart, stop (not complete)
+	set slave address,
+	set transfer direction
+	set number of bytes transferred
+	set gyro register address in transmit register, 
+	start, 
+	set direction, 
+	restart, 
+	stop 
+	operate on data in receive register

@@ -86,125 +86,96 @@
 \chapterimage{chapter_head_2.png} % Chapter heading image
 \chapter{The Inter-Integrated Circuit (I\textsuperscript{2}C) Interface}
 
-%\begin{warning}
-%  \textbf{NOTE: This lab manual is incomplete!}\\
-%  This lab material will be heavily updated, expanded and revised over the next few days. Currently, the material involves communicating with the LM75 temperature sensor that will be used on the motor driver boards. This will be removed and updated to use the L3GD20 MEMS Gyroscope instead. 
-%\end{warning}
-
 \section{Introduction to I\textsuperscript{2}C}
-\subsection{History of I2C}
-I\textsuperscript{2}C (Inter-Integrated Circuit), is a serial communications bus developed by Philips Semiconductor in 1982. It is usually used as a lower-speed interface to connect multiple sensors to a processor. 
+    \begin{wrapfigure}{R}{0.2\textwidth}
+        \centering\includegraphics[width=0.125\textwidth]{i2c_logo}
+        %\caption{I\textsuperscript{2}C Logo}
+    \end{wrapfigure}
 
-\subsection{Operating Modes}
-\subsubsection{Master-Slave Architecture}
-\subsubsection{Speed Variants}
+    I\textsuperscript{2}C (Inter-Integrated Circuit), is a synchronous serial communications bus developed by Philips Semiconductor in 1982. It is usually used to connect lower-speed devices such as sensors to a microprocessor. I\textsuperscript{2}C's design enables many devices to share a single data connection and includes addressing so that each device can be individually selected without the requirement for external enable signals.
+    
+    There are multiple speed standards for the  I\textsuperscript{2}C interface. The most common of these are the original 100 kHz or the 400 kHz fast-mode.
 
-\section{Electrical Characteristics}
-\subsection{Connections and Topology}
-\subsection{Push-Pull and Open-Drain Outputs}
+    \subsection{Design and Topology}
+            I\textsuperscript{2}C has a bus topology where every device directly connects to two bidirectional signal lines. Because all devices share a single connection, only one device can transmit at a time, limiting the bus to half-duplex communications. 
 
+            \subsubsection{Device Modes}
+            Devices on an I\textsuperscript{2}C interface operate in either \textit{master} or \textit{slave} mode. 
+            \begin{itemize}
+                \item Master devices initiate communication with slave devices.
+                \item Each slave device has an unique hardware I\textsuperscript{2}C address.
+                \item A master selects a specific slave by sending its address on the bus.
+                \item Slave devices can respond to a master device when requested, but can't start a new transaction on their own.
+                \item Some devices, such as most processors, can switch between master and slave mode.
+            \end{itemize}
+        
+           Unlike many interfaces, I\textsuperscript{2}C allows multiple master devices to share the same bus. There is an arbitration system in the addressing protocol that resolves conflicts when multiple masters attempt to use the bus at the same time. Figure \ref{topology} shows an example of a master and slave devices connected via an I\textsuperscript{2}C bus. 
 
-\subsubsection{Why Open-Drain for I\textsuperscript{2}C}
-Unlike USART connections, the I2C bus drivers are “open drain”, meaning that they can pull the corresponding signal line low, but cannot drive it high. Thus, there can be no bus contention where one device is trying to drive the line high while another tries to pull it low, eliminating the potential for damage to the drivers or excessive power dissipation in the system. Each signal line has a pull-up resistor on it, to restore the signal to high when no device is asserting it low.
+            \begin{figure}[]
+                \centering\includegraphics[width=0.5\textwidth]{topology}
+                \caption{Topology and connections of an I\textsuperscript{2}C bus.}
+                \label{topology}
+            \end{figure}
+            
+            %[shared figure for topology, signals, and master/slave]
+        \subsubsection{Signal Connections}
+            I\textsuperscript{2}C uses two signal lines, these are \textit{SDA} (Serial Data) and \textit{SCL} (Serial Clock). These are shown in the example interface demonstrated in figure \ref{topology}. 
+            
+            When communicating, a master device produces clock transitions on the SCL line. The slave device uses this clock signal for both receiving and transmitting data. A slave can also hold the clock line low to pause the master if it needs more time for processing. This process is called clock-stretching
+            
+            Depending on the direction of communication, both the master and slave produce data on the shared SDA line. When receiving data, both slave and master devices acknowledge each communication frame to notify the other that the data was received.  Both the clock and data lines use an open-drain I/O structure, this is discussed in section \ref{electrical}. 
+            
+            %Discuss the SDA and SCL lines, mention open-drain
+    \subsection{Electrical Characteristics} \label{electrical}
+        %[figure contrasting push-pull and open-drain I/O structures]
+        \begin{figure}[]
+            \centering\includegraphics[width=0.75\textwidth]{placeholder}
+            \caption{Push-Pull \& Open-Drain Output Circuitry}
+            \label{output_circuit}
+        \end{figure}
+        
+        \subsubsection{Push-Pull vs Open Drain Outputs}
+        Figure \ref{output_circuit} shows a simplified representation of output circuity for \textit{push-pull} and \textit{open-drain} outputs. 
+        
+        Push-Pull Outputs have drive transistors that allow the device to push the output line ``high'' by connecting to the supply rail of the device, as well as pulling it ``low'' by connecting to ground. A push-pull output can source or sink current depending on the voltage of the connected circuitry. 
+        
+        Open-Drain Outputs have a single transistor and can only pull the output to a low state. Because of this, open-drain systems require an external influence such as a pull-up resistor to return the line to a high state when no device is pulling it low. 
+        
+        \subsubsection{Why Open-Drain for I\textsuperscript{2}C}
+            I\textsuperscript{2}C uses open-drain outputs due to the bi-directional nature of its signal lines. Consider a push-pull connection where two devices are attempting to output different states onto a single wire. One device attempts to drive the line high by connecting to the supply rail, while the other connects to ground to drive the line low. In this event, the two devices generate a high current power-ground short circuit, likely damaging the transistors within both devices. 
+            
+            Open-drain systems inherently cannot cause damaging faults because all devices can only pull the signal line low. The pull-up resistor limits the total current flowing through the system, and the most severe error that can occur is corrupted data. 
 
-
-\section{Structure of an I\textsuperscript{2}C Transaction}
-\begin{figure}[]
-    \centering\includegraphics[width=\textwidth]{I2C_Overview}
-    \caption{Example I\textsuperscript{2}C transaction.}
-    \label{overview}
-\end{figure}
-
-\subsection{Overview}
-Communication via I2C is more complex than with a USART. The signaling must adhere to a strict protocol for the devices on the bus to recognize it as valid I2C communications.  
-
-Messages are broken up into two types of frame: an address frame, where the master indicates the slave to which the message is being sent, and one or more data frames, which are 8-bit data messages passed from master to slave or vice versa. Data is placed on the data (SDA) line while the clock (SCL) is pulled low, and is sampled during the clock's rising edge. The time between clock edge and data read/write is determined by the devices on the bus and the configuration of the I2C peripheral.
-
-\subsection{Address Frame}
-An address frame always begins every I2C transaction. It's purpose is to select a specific slave device to communicate while indicating whether the master wishes to read or write data. 
-\subsubsection{Start Condition}
-To initiate the address frame, the master device leaves SCL high and pulls SDA low. This notifies all slave devices that a transmission is about to start. If two master devices wish to take ownership of the bus at one time, whichever device pulls SDA low first wins the race and gains control of the bus. 
-\subsubsection{Addressing and the Read/Write Bit}
-For a 7-bit address, the address is clocked out most significant bit (MSB) first, followed by a read/write bit indicating whether this is a read (1) or write (0) operation. 
-\subsubsection{Slave Acknowledgment}
-The 9th bit of the frame is the NACK/ACK bit. This is the case for all frames (data or address). Once the first 8 bits of the frame are sent, the receiving device is given control over SDA. If the receiving device does not pull the SDA line low before the 9th clock pulse, it can be inferred that the receiving device either did not receive the data or did not know how to parse the message. In that case, the exchange halts, and it’s up to the master of the system to decide how to proceed.
-
-\subsection{Data Frame}
-After the address frame has been sent, data can begin being transmitted. The master will simply continue generating clock pulses at a regular interval, and the data will be placed on SDA by either the master or the slave, depending on whether the R/W bit indicated a read or write operation. The number of data frames is arbitrary, and most slave devices will auto-increment the internal register, meaning that subsequent reads or writes will come from the next register in line.
-\subsubsection{Stop Condition}
-Once all the data frames have been sent, the master will generate a stop condition. Stop conditions are defined by a 0->1 (low to high) transition on SDA after a 0->1 transition on SCL, with SCL remaining high. During normal data writing operation, the value on SDA should not change when SCL is high, to avoid false stop conditions.
-
-\subsection{Multi-Transaction Communications}
- By design, I2C doesn't allow reading and writing data within a single transaction. However, it is possible for a master device to chain multiple transactions together without releasing the bus. This has the benefit that no other devices can claim the bus during the preparation for the next transaction. 
-\subsubsection{Restart Conditions}
-To chain multiple transactions together, the master generates a restart condition.
- To perform a restart condition, SDA is allowed to go high while SCL is low, SCL is allowed to go high, and then SDA is brought low again while SCL is high. Because there was no stop condition on the bus, the previous communication wasn’t truly completed and the current master maintains control of the bus.
- 
- At this point, the next message can begin transmission. The syntax of this new message is the same as any other message–an address frame followed by data frames. Any number of repeated starts is allowed, and the master will maintain control of the bus until it issues a stop condition.
-\begin{figure}[]
-    \centering\includegraphics[width=\textwidth]{I2C_Restart}
-    \caption{Repeated start conditions allow for chaining multiple transactions. }
-    \label{restart}
-\end{figure}
-
-\section{Using the L3GD20 MEMS Gyroscope}
-
-\section{Introducing the I\textsuperscript{2}C Peripheral}
-\subsection{I\textsuperscript{2}C Registers}
-\begin{itemize}
-    \item \textbf{Control register 1 (I2C\_CR1)} -- The control register which manages I2C system-wide configuration settings. You'll be configuring most of the main parameters here.
-    \item \textbf{Control register 2 (I2C\_CR2)} -- The control register which sets parameters for current I2C transaction. You'll be configuring your reads/writes here.
-    \item \textbf{Timing register (I2C\_TIMINGR)} -- This register controls all of the I2C timing parameters, the values written here need to either be derived from a system of equations manually or from the example timings table located in the datasheet. 
-    \item \textbf{Interrupt and status register (I2C\_ISR)} -- The interrupt and status register, this register is read-only.
-    \item \textbf{Interrupt clear register (I2C\_ICR)} -- This register can be used to clear the flags in the ISR.
-    \item \textbf{Receive data register (I2C\_RXDR)} -- The receive data register
-    \item \textbf{Transmit data register (I2C\_TXDR)} -- The transmit data register
-\end{itemize}
-
-\subsection{Initializing the Peripheral}
-
-\subsection{}
-
-\section{Debugging I\textsuperscript{2}C Communications}
-
-The figure \ref{fullCaptureAnnotated} shows a logic capture of a successful reading of the chip ID register, we'll go over important parts of the image afterwards. 
-
-\begin{figure}[]
-    \centering\includegraphics[width=\textwidth]{fullCaptureAnnotated}
-    \caption{Annotated full I2C capture}
-    \label{fullCaptureAnnotated}
-\end{figure}
-
-The first three things to notice in the above figure is that the I2C protocol analyzer marks every START (green dot) and STOP (brown dot) condition. The initial START (circled in red) sets up a write to the LM75 to select the chip ID register. Then without releasing the bus (demonstrated a bit later) the peripheral issues a second START/RESTART (circled in yellow) to begin the data read. Finally the peripheral issues a STOP (circled in orange) condition to release the bus.  
-
-One thing to notice is that after every data packet the analyzer lists whether it received an ACK or NACK. The I2C peripheral will set flags in its status register to let you know whether something responded to a packet or not. The final packet in a I2C transaction typically isn't acknowledged. Figure \ref{noRespCapture} shows a capture where the LM75 wasn't connected. If you see this in your debugging either you have a wrong slave address, the slave isn't powered or connected properly or you have the I2C pins not configured to open-drain output mode. 
-
-\begin{figure}[]
-    \centering\includegraphics[width=\textwidth]{noRespCapture}
-    \caption{I2C capture without slave response}
-    \label{noRespCapture}
-\end{figure}
-
-One common mistake is to forget to release the I2C clock line (SCL) with a STOP condition after a transaction. This will prevent any further communications from being able to use the bus. The idle state of the I2C lines should always be high. Figure \ref{noStopCapture} shows a trace where the code is missing the final STOP condition. (the portion circled in red should have returned high)
+\section{Structure of an I2C Transaction}	
+    %Briefly mention overview of data transfer & sampling.
+    
+    \begin{figure}[]
+        \centering\includegraphics[width=\textwidth]{overview}
+        \caption{Example I\textsuperscript{2}C transaction}
+        \label{overview}
+    \end{figure}
+    
+    I\textsuperscript{2}C uses a strict protocol that defines data transfer as a series of \textit{frames} and conditions.     
+    Transmitted data is broken up into two types of frame: an address frame, where the master indicates the slave to which the data is sent and one or more data frames. Data is placed on the SDA line while the clock (SCL) is pulled low, and is sampled during the clock's rising edge. The time between the clock transition and data read/write is determined by the devices on the bus and the configuration of the I2C peripheral. An example I\textsuperscript{2}C transaction is shown in figure \ref{overview}. 
+    
+    \subsection{Address Frame}
+        \subsubsection{Start Condition}
+        A master device initiates an address frame by pulling SDA low while leaving SCL high. This state, known as the \textit{start condition}, notifies all other devices that a transmission is about to begin. If two master devices concurrently attempt to take control of the bus, whichever device pulls SDA low first or transmits a lower slave address  wins the arbitration. 
+        \subsubsection{Addressing and the Read/Write Bit}
+        Typical I\textsuperscript{2}C addresses are 7-bits. However, some devices support an extended mode allowing for 10-bit addressing. Addresses are transmitted most significant bit (MSB) first, followed by a read/write bit indicating whether the master intends to read (1) or write (0) data to the slave device. 
+        \subsubsection{Slave Acknowledgment}
+        The final bit in all frames is the \textit{acknowledge} (ACK) bit. After completing the address or data bits of a frame, the transmitting device allows SDA to return high and waits for the receiver to respond by pulling it low. If this does not occur, indicating a \textit{not-acknowledge} or NACK condition, the transmitter can assume that the data was not received. 
+    \subsection{Data Frame}
+        \subsubsection{Data Byte}
+        An I\textsuperscript{2}C transaction can contain an arbitrary number of data frames, where each frame contains a single data byte. The master device generates clock transitions on the SCL line while either the master or slave device places data on the SDA line according to the direction indicated by the read/write bit. 
+        \subsubsection{Stop Condition}
+        After completing the entire transaction, the master generates a \textit{stop condition} and signals the release of the bus. Stop conditions are indicated by a low to high transition of SDA, while the clock (SCL) remains high. During normal data transfer, SDA only changes state while the SCL signal is low. 
+        \subsubsection{Restart Condition}
+        Because I\textsuperscript{2}C is a half-duplex bus, master and slave devices can not transmit simultaneously. If a master wishes to both write and read from a slave, it must begin a new transaction with the read/write bit set correctly. 
+        
+        In the case where chained transactions are desired, ending the current transaction with a stop condition would release the bus and allow other devices to steal control before the master begins again. To prevent this, devices are allowed to issue new start conditions without properly ending the previous transaction with a stop. This event is known as a \textit{restart} condition. 
 
 
-\begin{figure}[]
-    \centering\includegraphics[width=\textwidth]{noStopCapture}
-    \caption{Final data frame without stop condition}
-    \label{noStopCapture}
-\end{figure}
 
-Finally, in an I2C RESTART condition such as between a write and a read, the peripheral purposely doesn't issue a STOP because it doesn't want to surrender the bus to anyone else that may be waiting to use it. Typically the space between the two operations (read and write) is small enough that you can't see it except for the long repeated start cycle on the clock. Figure \ref{restartCapture} shows a trace where there is some delay between the two operations. 
-
-\begin{figure}[]
-    \centering\includegraphics[width=\textwidth]{restartCapture}
-    \caption{Repeated start condition (restart)}
-    \label{restartCapture}
-\end{figure}
-
-The portion circled in red is the released/idle state of the bus, the orange circled portion is where the peripheral is purposefully holding the bus active until it's ready to communicate again.
-
-
-\section{Lab Assignment}
 
 \end{document}

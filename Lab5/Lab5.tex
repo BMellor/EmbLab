@@ -175,7 +175,63 @@
         
         In the case where chained transactions are desired, ending the current transaction with a stop condition would release the bus and allow other devices to steal control before the master begins again. To prevent this, devices are allowed to issue new start conditions without properly ending the previous transaction with a stop. This event is known as a \textit{restart} condition. 
 
+\section{Using the I2C Peripheral}
+    The I2C peripheral in the STM32F0 has a high-level interface that hides much of the complexity of the bus protocol. The peripheral can automatically generate a complete I2C transaction once the user configures basic parameters such as the slave address and number of bytes to transfer. 
+    
+    While this interface is simpler than the original protocol, the initialization of the I2C peripheral is non-trivial. The I2C peripherals in the STM32F0 support a variety of modes and speeds. Due to the strictness of the I2C standard, incorrectly configured settings may prevent slave devices from responding.
 
+\subsection{Peripheral Registers}
+    \subsubsection{Control Register 1 (I2C\_CR1)}
+    The control register 1 manages the overall operation of the I2C peripheral. These settings fall into a few different categories:
+    \begin{itemize}
+        \item \textbf{SMBus Configuration} -- SMBus is a more restrictive protocol designed for greater reliability than conventional I2C. Configuration bits and registers related to SMBus should be left at default. 
+        \item \textbf{Slave Mode Configuration} -- The I2C peripheral operates as both a slave and master device. Since we won't be using a multi-master network for this lab, these settings can be ignored. 
+        \item \textbf{Noise Filters} -- The I2C peripheral has both analog and digital noise filters. The analog filter is enabled by default and is sufficient for normal operation. 
+        \item \textbf{Interrupt Enables} -- There are many I2C conditions that can generate interrupts. This register controls interrupts for events such as transmission errors, completed transmissions, and when the bus is free. 
+        \item \textbf{Peripheral Enable} -- The I2C peripheral must be enabled in this register after it is initialized. Many initialization settings are protected once this bit is enabled.
+    \end{itemize}  
+    
+    \subsubsection{Control Register 2 (I2C\_CR2)}
+    The control register 2 contains settings for the current I2C transaction. As such, this register is used whenever communicating with a slave device. Understanding this register is critical to using the peripheral; bits that will be used heavily during the lab exercises are described here. 
+    \begin{itemize}
+        \item \textbf{AUTOEND} -- When set, the peripheral will automatically generate a stop condition at the end of a transaction. This setting is undesirable when performing chained writes and reads as will be required in the lab assignment. 
+        \item \textbf{NBYTES[7:0]} -- This group of 8-bits set the number of bytes to transmit in the next transaction. These must be modified using bitwise operations to prevent overwriting the rest of the register. 
+        \item \textbf{STOP \& START} -- These bits generate start and stop conditions on the bus. The user starts a new transaction by writing to the START bit.
+        \item \textbf{RD\_WRN} -- This bit sets the direction of data transfer for the next transaction. Its state controls the read/write bit sent in the address frame. 
+        \item \textbf{SADD[9:0]} -- This group of 10-bits sets the slave address used in the next transaction. Unfortunately, the default 7-bit addressing mode uses bits [7:1] within the center of the bit field, often leading to an easy user error when learning the peripheral. These must be modified using bitwise operations to prevent overwriting the rest of the register.  
+    \end{itemize}
+    
+    
+    \subsubsection{Timing Register (I2C\_TIMINGR)}
+    The I2C peripheral has a very flexible timing system which allows the user to specify slew-rates and sampling delays. These settings can adjust the I2C peripheral to operate reliably under non-ideal conditions. 
+    
+    This flexibility requires the user to derive timing settings from a series of equations documented in section 26.4.5 of the peripheral manual. Fortunately, section 26.4.10 contains tables of pre-calculated parameters which result in standard behavior suitable for most systems.  
+    
+    \subsubsection{Interrupt and Status Register (I2C\_ISR)}
+    The read-only interrupt and status register indicates the state of every interrupt condition in the peripheral. These flag bits are also used by blocking drivers to determine the state of the bus.
+    
+    The peripheral hardware clears many of these flags automatically whenever the appropriate action is completed by the user. The documentation should always be examined to determine the specific conditions required for each bit. 
+    \subsubsection{Interrupt Clear Register (I2C\_ICR)}
+    The interrupt clear register is used to clear status flags that require direct acknowledgment from the user. Many of these involve error condition interrupts, and will not be used in the lab assignment.
+    
+    \subsubsection{Transmit \& Receive Data Registers (I2C\_TXDR{\textbackslash}I2C\_RXDR)}
+    These registers are written and read by the user application during use of the peripheral. 
+    
+    \subsubsection{Other Peripheral Registers}
+    The I2C peripheral has additional registers used by the slave and SMBus modes. These should be left in their default state.
+
+\subsection{Initializing the Peripheral}
+
+
+\subsection{Basic Communication}
+\subsubsection{Transmitting to a Slave Device}
+\subsubsection{Setting up the Transaction}
+
+\subsubsection{Writing Multiple Bytes}
+
+\subsubsection{Receiving from a Slave Device}
+\subsubsection{Starting a Read after a Write}
+\subsubsection{Reading Multiple Bytes}
 
 
 \end{document}

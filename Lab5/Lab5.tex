@@ -228,7 +228,18 @@
    
     The I2C peripherals in the STM32F0 offer a variety of operating modes, and have a large set of status flags used for developing interrupt based non-blocking drivers. Depending on the modes and interrupts used, the initialization of the I2C peripheral can be complex or relatively simple. The complete initialization process is documented in section 26.4.5 of the peripheral reference manual. 
     
-    This lab requires only the I2C master mode using blocking operations; these involve minimal initialization. 
+    This lab requires only the I2C master mode using blocking operations; these involve minimal initialization and can be configured by the following steps.
+    
+    \begin{itemize}
+        \item Enable and configure the GPIO output pins used by the I2C peripheral to alternate function mode.
+        \begin{itemize}
+            \item Set the pin's output type to be \underline{\textit{open-drain}} in the GPIOx\_OTYPER register. 
+            \item Set the appropriate alternate function number in the GPIOx\_AFR registers. 
+        \end{itemize}
+        \item Enable the I2C system clock using the RCC peripheral.
+        \item Configure bus timing using the I2Cx\_TIMINGR.
+        \item Enable the I2C peripheral using the PE bit in the CR1 register.
+    \end{itemize} 
      
     \subsubsection{Configuring the Bus Timing}
     The only system-wide initialization step used by the basic modes in this lab is to set the I2C timing register. The values within this register determine the transmission rate of the interface. 
@@ -249,7 +260,7 @@
     Transaction specific options found in the CR2 register are not locked by the PE bit. These are modified at the beginning of each I2C transaction to set parameters such as the slave address.
 
 \subsection{Basic Communication}
-    The processes of writing and reading from a slave device are very similar. Every communication follows a few simple steps: setting transaction parameters, starting the peripheral, waiting on status flags, and looping to previous steps depending on the flags set and length of data. Figure \ref{com_flow} contains a flowchart demonstrating the general process of using the master mode with blocking operations. 
+    The processes of writing and reading from a slave device are very similar. Every communication follows a few simple steps: setting transaction parameters, starting the peripheral, waiting on status flags, and looping to previous steps depending on the flags set and length of data. Figure \ref{trans_flow} contains a flowchart demonstrating the general process of using the master mode with blocking operations. 
 
     \subsubsection{Setting up the Transaction}
         Each I2C transaction is initialized by completing the following steps in the CR2 register:
@@ -257,6 +268,7 @@
             \item Set the slave address in the SADD[7:1] bit field. 
             \item Set the number of data byte to be transmitted in the NBYTES[7:0] bit field.
             \item Configure the RD\_WRN to indicate a read/write operation.
+            \item Do not set the AUTOEND bit, this lab requires software start/stop operation. 
             \item Setting the START bit to begin the address frame. 
         \end{enumerate}
     
@@ -265,31 +277,48 @@
     \end{warning}
     
     \begin{example}[Setting the SADD and NBYTES Bit Fields]
-        \code{./Files/setup.c}{Setting the SADD and NBYTES bit fields using bitwise operations}{setup}
-        Since the SADD and NBYTES bit fields are not within their own registers, they cannot be directly assigned without overwriting the remainder of the CR2 register. Because of this, bitwise operations are required to first clear and then set the bit fields. 
+       
+        Since the SADD and NBYTES bit fields are not within separate registers, they cannot be directly assigned without overwriting the remainder of the CR2 register. Because of this, bitwise operations are required to clear and set the bit fields. 
         
-        Rather than directly assigning each individual bit, it is helpful to use the desired value as a shifted bitmask directly. Figure \ref{setup} contains example code which demonstrates how to clear and set these bit fields using bitwise operations. 
+        Rather than directly assigning each bit, it is helpful to use the desired value as a shifted bitmask directly. The following example demonstrates how to clear and set these bit fields using bitwise operations. 
+        %\code{./Files/setup.c}{Setting the SADD and NBYTES bit fields using bitwise operations}{setup}
+        
+         \smallskip
+         \colorbox{gray!20!white}{
+             \parbox{\linewidth-2\fboxsep} {
+                 \centering 
+                 \lstinputlisting[language=C]{./Files/setup.c}
+             }
+         }
+     
+         \smallskip
     \end{example}
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     \subsubsection{Transmitting to a Slave Device}
-    
+        Once a transaction has been initiated, the driver must wait until the I2C peripheral has transmitted the address frame and received an acknowledgment from the slave device. This is accomplished by polling on both the \textit{Transmit Interrupt Status} (TXIS) and \textit{Not Acknowledge Received Flag} (NACKF) status bits. 
+        
+        Depending on which flag bit is set determines the following operation:
+        \begin{itemize}
+            \item \textbf{NACKF Flag Set} -- This flag indicates that the slave device did not acknowledge the address frame. There is likely a configuration issue; the current transaction has been aborted. Clear the NACKF flag, revise the initialization, and attempt to start a new transaction. 
+            \item \textbf{TXIS Flag Set} -- The address frame completed successfully, and the peripheral is requesting new data to be written into the transmit data (TXDR) register. 
+        \end{itemize}
+        
+        Once successfully transmitting data, repeat the polling and writing process with the NACKF and TXIS bits until the number of bytes in the NBYTES bit field has been written. After reaching this limit, poll instead on the \textit{Transfer Complete} (TC) status flag. 
+        
+        The TC flag is set when the peripheral determines that the transaction is complete, and is waiting for the user to perform a restart or stop condition. To restart, return to the top of the process for transmitting or receiving data from the slave. To release the bus by issuing a stop condition, set the STOP bit in the CR2 register.  
     
     \subsubsection{Receiving from a Slave Device}
+        Receiving from a slave device is nearly identical to transmitting. Often, receive transactions occur as a restart of a transmit. This is because many slave devices operate using a register-based control scheme similar to using peripheral registers. The difference is that to access the registers within a slave device, the user first transmits the register address to select for the follow-up read operation. \\
+        
+        Once the transaction is initiated, the driver should poll on the \textit{Receive Data Register Not Empty} (RXNE) and \textit{Not Acknowledge Received Flag} (NACKF) status bits. Assuming that no acknowledgment errors occurred, the RXNE status flag indicates that data has been received and is waiting to be read from the receive data (RXDR) register.  
+        
+        Multi-byte reads are accomplished by repeatedly polling on the status flags. Once the number of bytes has been read as was set in the NBYTES register, the user can issue a restart or stop condition.  
     
-    
-    
-    \subsubsection{Restarting and Changing Direction}
-
+    \begin{figure}[]
+       \centering\includegraphics[width=\textwidth]{trans_flow}
+       \caption{Blocking transmit and receive flowchart}
+       \label{trans_flow}
+    \end{figure}
 
 
 \end{document}

@@ -1,0 +1,160 @@
+
+
+\documentclass[11pt,fleqn]{book} % Default font size and left-justified equations
+
+\input{structure} % Insert the commands.tex file which contains the majority of the structure behind the template
+\usepackage{float}
+
+\usepackage{listings} 
+\lstset
+{ 
+    language=C,
+    basicstyle=\ttfamily,
+    columns=fullflexible,
+    keepspaces=true,
+    numbers=none,
+    stepnumber=1,
+    showstringspaces=false,
+    tabsize=1,
+    breaklines=true,
+    breakatwhitespace=false,
+    keywordstyle=\color{blue!80!black},
+    stringstyle=\color{red!80!black},
+    commentstyle=\color{green!40!black},
+    morecomment=[l][\color{magenta!80!black}]{\#}
+}
+
+\usepackage{caption}
+\captionsetup[figure]{font=small,skip=10pt}
+
+%\usepackage{enumitem}
+%\setlist{noitemsep} % or \setlist{noitemsep} to leave space around whole list
+
+
+%%%%% May be too harsh to prevent paragraph breaks across pages! 
+%\interlinepenalty 10000
+\widowpenalties 1 10000
+\raggedbottom
+
+
+\newcommand{\ilcode}[1]{
+    %\vspace{0.5pt}
+    \smallskip
+    \colorbox{gray!20!white}{
+        \centering
+        \parbox{\linewidth-2\fboxsep}{
+            \lstinline@#1@
+        }
+    }
+    %\vspace{0.5pt}
+}
+
+\newcommand{\code}[3]{
+    \begin{figure}[]
+        \colorbox{gray!20!white}{
+            \parbox{\linewidth-2\fboxsep} {
+                \centering 
+                \lstinputlisting[language=C]{#1}
+            }
+        }
+        \caption{#2}
+        \label{#3}
+    \end{figure}
+}
+
+\usepackage{textcomp}
+\usepackage{wrapfig}
+\usepackage{float}
+
+\usepackage{silence} % http://ctan.org/pkg/silence
+\ErrorFilter{textcomp}{Symbol \textrightarrow not provided}
+
+% Disable paragraph indentation globally since template was indenting some and not others. (looked terrible)
+\setlength{\parindent}{0pt}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%                                                                                         %%%%
+%%%%       Chapter 6:                                                                        %%%%
+%%%%                                                                                         %%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\setcounter{chapter}{5} % Manually adjust chapter counter to number before desired chapter heading
+
+\begin{document}
+	
+\chapterimage{chapter_head_2.png} % Chapter heading image
+\chapter{The Inter-Integrated Circuit (I\textsuperscript{2}C) Interface}
+
+\section{Introduction to I\textsuperscript{2}C}
+    \begin{wrapfigure}{R}{0.2\textwidth}
+        \centering\includegraphics[width=0.125\textwidth]{i2c_logo}
+        %\caption{I\textsuperscript{2}C Logo}
+    \end{wrapfigure}
+
+    I\textsuperscript{2}C (Inter-Integrated Circuit), is a synchronous serial communications bus developed by Philips Semiconductor in 1982. It is usually used to connect lower-speed devices such as sensors to a microprocessor. I\textsuperscript{2}C's design enables many devices to share a single data connection, and includes addressing so that each device can be individually selected without the requirement for external enable signals.
+    
+    There are multiple speed-grades for the interface. Standard I\textsuperscript{2}C
+
+    \subsection{Design and Topology}
+            I\textsuperscript{2}C has a bus topology where every device directly connects to two bidirectional signal lines. Because all devices share a single connection, only one device can transmit at a time, limiting the bus to half-duplex communications. 
+
+            \subsubsection{Device Modes}
+            Devices on an I\textsuperscript{2}C interface operate in either \textit{master} or \textit{slave} mode. 
+            \begin{itemize}
+                \item Master devices initiate communication with slave devices.
+                \item Each slave device has an unique hardware I\textsuperscript{2}C address.
+                \item A master selects a specific slave by sending its address on the bus.
+                \item Slave devices can respond to a master device when requested, but can't start a new transaction on their own.
+                \item Some devices, such as most processors, can switch between master and slave mode.
+            \end{itemize}
+        
+           Unlike many interfaces, I\textsuperscript{2}C allows multiple master devices to share the same bus. There is an arbitration system in the addressing protocol that resolves conflicts when multiple masters attempt to use the bus at the same time. Figure \ref{topology} shows an example of a master and slave devices connected via an I\textsuperscript{2}C bus. 
+
+            \begin{figure}[]
+                \centering\includegraphics[width=0.5\textwidth]{topology}
+                \caption{Topology and connections of an I\textsuperscript{2}C bus.}
+                \label{topology}
+            \end{figure}
+            
+            %[shared figure for topology, signals, and master/slave]
+        \subsubsection{Signal Connections}
+            I\textsuperscript{2}C uses two signal lines, these are \textit{SDA} (Serial Data) and \textit{SCL} (Serial Clock). These are shown in the example interface demonstrated in figure \ref{topology}. 
+            
+            When communicating, a master device produces clock transitions on the SCL line. The slave device uses this clock signal for both receiving and transmitting data. A slave can also hold the clock line low to pause the master if it needs more time for processing. This process is called clock-stretching
+            
+            Depending on the direction of communication, both the master and slave produce data on the shared SDA line. When receiving data, both slave and master devices acknowledge each communication frame to notify the other that the data was received.  Both the clock and data lines use an open-drain I/O structure, this is discussed in section \ref{electrical}. 
+            
+            %Discuss the SDA and SCL lines, mention open-drain
+    \subsection{Electrical Characteristics} \label{electrical}
+        %[figure contrasting push-pull and open-drain I/O structures]
+        \begin{figure}[]
+            \centering\includegraphics[width=\textwidth]{placeholder}
+            \caption{Push-Pull \& Open-Drain Output Circuitry}
+            \label{output_circuit}
+        \end{figure}
+        
+        \subsubsection{Push-Pull vs Open Drain Outputs}
+        Figure \ref{output_circuit} shows a simplified representation of output circuity for \textit{push-pull} and \textit{open-drain} outputs. 
+        
+        Push-Pull outputs have drive transistors that allow the device to push the output line ``high'' by virtually connecting to the supply rail of the device, as well as pulling it ``low'' by virtually connecting to the device ground. A push-pull output has the capability to source or sink current depending on the original voltage of the connected line. 
+        
+        Open-Drain outputs have a single transistor and can only pull the output to a low state. Because of this, open-drain systems require an external influence such as a pull-up resistor is required to return the line to a high state when no device is pulling it low. 
+        
+        \subsubsection{Why Open-Drain for I\textsuperscript{2}C}
+            The reason that I\textsuperscript{2}C uses open-drain outputs is because of the bi-directional nature of its signal lines. Consider a push-pull connection where two devices are attempting to output different states onto a single wire. One device attempts to drive the line high by connecting to the supply rail, while the other connects to ground in order to drive the line low. In this event, the two devices generate a power-ground short circuit, likely damaging the transistors within both devices. 
+            
+            Open-drain systems inherently cannot cause damaging faults because all devices can only pull the signal line low. The pull-up resistor limits the total current flowing through the system and the most severe error that can occur is corrupted data. 
+
+\section{Structure of an I2C Transaction}	
+    %Briefly mention overview of data transfer & sampling.
+    \subsection{Address Frame}
+        \subsubsection{Start Condition}
+        \subsubsection{Addressing and the Read/Write Bit}
+        \subsubsection{Slave Acknowledgment}
+    \subsection{Data Frame}
+        \subsubsection{Stop Condition}
+        \subsubsection{Restart Condition}
+
+
+\end{document}

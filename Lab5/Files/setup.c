@@ -8,4 +8,4 @@ I2C2->CR2 &= ~((0x7F << 16) | (0x3FF << 0));
  * Remember that for 7-bit addresses, the lowest SADD bit
  * is not used and the mask must be shifted by one.
  */
-I2C2->CR2 &= ~((42 << 16) | (0x14 << 1));
+I2C2->CR2 |= (42 << 16) | (0x14 << 1);

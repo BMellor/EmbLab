@@ -1,0 +1,44 @@
+This lab will teach you the basics about using the I2C peripheral in the STM32F0. After this lab you should be able to communicate with the digital gyroscope on the Discovery board as well as other I2C devices.
+
+The primary goal of the prelab assignments are to get you to read through the lab manual. 
+
+Prelab Assignment
+Download the lab manual: Lab5_Manual.pdf
+You will need to use a logic analyzer to debug this lab! If you haven't already, read the following online tutorials on the Saleae Logic Analyzer (Complete User Guide (Links to an external site.))
+Using the Trigger
+Using Protocol Analyzers
+Capture Settings Configuration
+Read the entire lab manual and answer the following questions. You'll have to search for the sections containing the answers this time.
+Describe two differences between I2C master and slave devices?
+What are the two connections in an I2C bus? Describe their purpose.
+What is the difference between open-drain and push-pull outputs?
+What is the purpose of the I2C restart condition?
+What peripheral register would you use to set the read/write direction of the next I2C transaction?
+The 10-bit SADD bit-field holds the slave device address. Since standard I2C addresses only use 7 bits, to which bits in the bit-field would you write the shorter address?
+Name one thing you found confusing or unclear in the lab.
+ 
+
+Submit the following:
+Write your answers either directly in Canvas or submit a Word/PDF document. Remember that prelab's are due at the beginning of your lab session! 
+
+
+
+
+
+Postlab
+
+What does the AUTOEND bit in the CR2 register do? Why don't you want to use it when you'll be needing a restart condition?
+
+This lab used standard-mode 100 kHz I2C speed. What values would you write in the TIMINGR if we were using 400 kHz fast-mode?
+
+This lab used blocking code. To implement it completely as non-blocking you would replace all of the wait loops with interrupts. Most flags in the I2C peripheral can trigger an interrupt if the proper enable bit is set. Find the interrupt enable bits that match the following flags:
+ TC
+ NACKF
+ TXIS (transmit interrupt)
+ ARLO 
+
+The gyro can operate in three measurement ranges, measured in degrees-per-second (dps). What are these three ranges? 
+ 
+What is the I2C address of the gyro when the SDO pin is low? (lab had the pin set high, read the I2C section of the gyro datasheet)
+
+

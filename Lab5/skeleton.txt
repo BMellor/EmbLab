@@ -3,19 +3,23 @@ I2C
 
 The Inter-Integrated Circuit Communications Interface
 
-Introduction to I2C (Keep each section brief)
-	History of I2C
-		Speed modes/options
-	Signal Connections
-	Topology (use single figure for signals, topology and master/slave)
-	Master/Slave & Multi-Master
-		Introduce Addressing
+Introduction to I2C
+		Origin of I2C (no header)
+
+	Design
+		topology (use single figure for signals, topology and master/slave)	
+		Signal Connections
+		Master/Slave & Multi-Master
+			Introduce Addressing
 	Electrical Characteristics (put some detail here, lots of questions about the GPIO output modes)
 		Push-Pull vs Open Drain Outputs 
 			(simplified GPIO structure of PP & OD)
 		Why Open-Drain for I2C 
 			describe why multi-master with push-pull short circuiting)
-	
+		Operating Speed
+			Speed modes/options
+			change in pull-up resistor
+			
 Basic structure of a I2C transaction
 	Start Condition
 	Address Frame
@@ -126,9 +130,85 @@ Using I2C
 	tell what to do in a register, not name the bit
 	or name bit but not register
 	
+Using the L3GD20 Digital Gyroscope
+
+Capabilities
+
+Registers
+	WHO_AM_I
+	CTRL_REG1
 	
-					
-			
+	
+	
+STEPS:
+need to find what pins on the STM32F072 connect to the Gyro sensor (tell to look in schematic portion of discovery board manual, uses pin namings just like eagle)
+	gyro does both SPI and I2C, pins are labeled as SPI interface signals (Hint: SCL and SDA are in GPIOB, CS is in GPIOC)
+	need: 	SPI2_SCK -> SCL  (I2C SCL) -> PB13
+			SDA (I2C SDA) -> PB11 -> jumper to PB15 (PB14 can also be SDA, but used as address select, so can't jumper there)
+			SPI2_MISO -> GPIO Address Select -> PB14
+			NCS_MEMS_SPI -> CS_I2C/SPI (Select I2C/SPI) -> PC0
+	
+configure gpio modes and alternate functions, find out what I2C peripheral these pins connect
+	SCL and SDA !must! be in open-drain output type
+	NCS_MEMS_SPI and SPI2_MOSI must be push-pull and standard output mode (no alternate function since using I2C interface not SPI)
+	SCL (PB13) -> AF5 (I2C2)
+	SDA (PB14) -> AF5 (I2C2)
+	
+	Set both NCS_MEMS_SPI and SPI2_MISO high (logic 1 output)
+	
+Enable and set up the SPI peripheral 
+	enable the I2C peripheral in the RCC
+	don't adjust the filter configuration (leave the analog filter on, digital off)
+	set the timings in the timing register (see section 6.3.2 in lab manual!)
+		will need to build the value of the register by shifting the different timing values into the proper spot
+	enable the I2C peripheral in its control register (don't enable AUTOEND)
+	
+Read ID ("WHO_AM_I") register from Gyro
+	Set slave address  = 1101011 -> 0x6B (if SPI2_MOSI pin is high)
+	set NUMBYTES = 1
+	set WRITE mode
+	set START
+	wait until transmit register empty,
+	write "WHO_AM_I" register address into transmit register = 0x0F
+	wait until transaction complete (don't set stop signal, want restart)
+	(might can skip) Set slave address  = 0b01101011 -> 0x6B (if SPI2_MOSI pin is high)
+	set NUMBYTES = 1
+	set READ mode
+	set START/RESTART		
+	wait until read complete and check value (should be 0b11010100 -> 0xD4)
+	set STOP 
+	
+	You will want to use the logic analyzer to see what is happening on the pins.
+	Set trigger on falling edge of SCL
+	Make sure to enable the I2C protocol analyzer for the signals, it will mark the bus events as well as any errors that occur. 
+	Turn in a screenshot (with I2C analyzer enabled with your prelab) of the full transaction reading the ID register. (address frame + data frame)
+	
+Configure the Gyro
+	Explicit steps not listed here, use the flowchart
+	Since this lab is teaching basic I2C and not how to control the gyro effectively
+	you won't be required to fully initialize the device or use the proper interrupt and status register system the sensor offers.
+		You'll just be polling at a rate that is known to be slower than the output of the sensor.
+		Typically won't do a read-modify-write pattern on remote registers like you do with the bitwise operations on the local peripherals. 
+		Just calculate out the desired bit pattern and overwrite the entire register.
+		You may want to do a read after writing just to check if things worked like you intended if things aren't working properly. 
+		
+	CTRL_REG1: Enable the X & Y axises and set the gyro into "normal/sleep mode" (read the bit definitions in the gyro datasheet!)
+		
+	Can leave all the other registers at their default state. The sensor's default mode is to leave all the fancy features disabled.
+	
+	To write data to a register, set NYBTES to 2 bytes. The first write is the register address, the second is the data to be written to the register. If you aren't planning to do an immediate read, then set the stop condition to release the bus after writing. (Technically not necessary since only master and slave on bus, but good practice.)
+	
+Read Gyro Data and make rotation indicator
+	Read the gyro data for the x and y axises every 100 mS 
+		Each axis has a signed 16-bit output value which is split across two registers. 
+		You will need to assemble the actual value together using bitwise operations. 
+		Ensure that your datatypes are large enough to shift data into proper locations.
+		
+	Use the LED's to indicate whether each axis is negative or positive.
+		For example: Set green LED when X axis is positive, orange when negative
+		Set red when Y axis is positive, blue when negative
+		
+	
 			
 Prelab Questions
 ------------------------------

@@ -1,0 +1,52 @@
+positive counter-clockwise
+negative clockwise
+
+mention zero-rate level
+
+
+WHO_AM_I (0Fh)
+	ID Register, should contain 0xD4
+CTRL_REG1 (20h)
+	Chip enables, data rate & bandwidth
+		Want to set X,Y,PD enables, not Z-axis 
+		Set data rate and bandwidth to lowest (not looking for performance)
+CTRL_REG2 (21h)
+	High-pass filter
+		leave disabled (all zeros)
+CTRL_REG3 (22h)
+	Interrupt output config 
+		leave disabled (all zeros)
+CTRL_REG4 (23h)
+	Gyro full scale, SPI mode, big/little endian, data update mode
+		Leave at default (all zeros)
+CTRL_REG5 (24h)
+	FIFO, filter and interrupt enables, memory reset
+		leave at default (all zeros)
+
+		
+STATUS_REG (27h)	
+	Data overrun, new data available	
+FIFO_CTRL_REG (2Eh)
+	Controls FIFO mode, leave at default bypass (all zeros)
+	
+	
+	
+Data Registers, start reading at lower address and simply read 2 bytes. Will automatically advance to the upper register. Need to assemble both 8-bit registers into a single signed 16-bit value using bitwise operations.	
+
+int16_t value = (((uint16_t) OUT_X_H) << 8) | OUT_X_L;
+	need to cast high byte to unsigned 16 before shifting
+	need to use unsigned because will be building new variable from raw bits
+
+	also can use
+int16_t value = OUT_X_H;
+value = value << 8;
+value |= OUT_X_L;
+
+	or
+int16_t value = OUT_X_L;
+value |= (((uint16_t) OUT_X_H) << 8)
+	
+OUT_X_L (28h), OUT_X_H (29h)	
+OUT_Y_L (2Ah), OUT_Y_H (2Bh)
+
+

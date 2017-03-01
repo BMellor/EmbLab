@@ -224,7 +224,7 @@
     \subsubsection{Other Peripheral Registers}
     The I\textsuperscript{2}C peripheral has additional registers used by the slave and SMBus modes. These should be left in their default state.
 
-\subsection{Initializing the Peripheral}
+\subsection{Initializing the Peripheral} \label{i2c_init}
    
     The I\textsuperscript{2}C peripherals in the STM32F0 offer a variety of operating modes, and have a large set of status flags used for developing interrupt based non-blocking drivers. Depending on the modes and interrupts used, the initialization of the peripheral can be complex or relatively simple. The complete initialization process is documented in section 26.4.5 of the peripheral reference manual. 
     
@@ -259,7 +259,7 @@
     
     Transaction specific options found in the CR2 register are not locked by the PE bit. These are modified at the beginning of each transaction to set parameters such as the slave address.
 
-\subsection{Basic Communication}
+\subsection{Basic Communication} \label{i2c_comm}
     The processes of writing and reading from a slave device are very similar. Every communication follows a few simple steps: setting transaction parameters, starting the peripheral, waiting on status flags, and looping to previous steps depending on the flags set and length of data. Figure \ref{trans_flow} contains a flowchart demonstrating the general process of using the master mode with blocking operations. 
 
     \subsubsection{Setting up the Transaction}
@@ -320,5 +320,234 @@
        \label{trans_flow}
     \end{figure}
 
+\section{Using the L3GD20 Digital Gyroscope}
+Gyroscopic sensors measure angular velocity (rate/speed of rotation) in degrees per second. The L3GD20 is a three-axis digital-output device, which returns positive values for counter-clockwise rotation, negative for clockwise, and near zero when not in motion. Figure \ref{gyro_axis} shows the orientation of the different axises and how they transition to the Discovery board. The axises can also be oriented by examining the pin 1 marking (engraved dot) on the top of the sensor packaging.  
+
+The L3GD20 has the capability to communicate over both SPI (serial-peripheral-interface) and I2C. The interface used is selected by the state of one of the connecting pins on the chip. 
+
+The datasheet for the L3GD20 digital gyroscope can be downloaded from ST's website using the following link: \href{http://www.st.com/resource/en/datasheet/l3gd20.pdf}{\textbf{(L3GD20 Datasheet) l3gd20.pdf}}
+
+\begin{figure}[]
+    \centering\includegraphics[width=\textwidth]{gyro_axis}
+    \caption{Gyroscope axis orientation.}
+    \label{gyro_axis}
+\end{figure}
+
+\subsection{Device Registers}
+Similar to the internal peripherals of the STM32F0, the L3GD20 device has a set of registers which configure its operating parameters. When starting a transaction with the sensor, the first written byte is always the address of a device register to select for the read/write operation. Figure \ref{gyro_flow} contains high-level flowcharts for reading and writing registers. 
+
+\begin{figure}[]
+    \centering\includegraphics[width=\textwidth]{gyro_flow}
+    \caption{Register read/write flowcharts.}
+    \label{gyro_flow}
+\end{figure}
+
+
+\subsubsection{Chip ID Register (WHO\_AM\_I)}
+Most devices contain an ID register with a known value documented in the datasheet. The primary purpose of the ID register is to provide something to compare against when testing driver code for the device. 
+\begin{itemize}
+    \item Address: 0x0F
+    \item Should contain the value: 0xD4
+\end{itemize}
+
+\subsubsection{Control Register 1 (CTRL\_REG1)}
+The control register 1 enables the axises of the sensor and sets the output bandwidth and data-rate. 
+\begin{itemize}
+    \item Address: 0x20
+\end{itemize}
+
+\subsubsection{Status Register (STATUS\_REG)}
+The status register indicates whether new data has been produced by the sensor and is ready to be accessed. It also contains overrun error flags which indicate that previous data was overwritten before it was read. Many of these events can be configured to produce interrupt requests on the two interrupt output pins of the chip.
+\begin{itemize}
+    \item Address: 0x27
+\end{itemize}
+
+\subsubsection{X-Axis Data Registers (OUT\_X\_L \& OUT\_X\_H)}
+The L3GD20 produces 16-bit signed data for each axis. The two 8-bit registers for each axis must be shifted and bitwise OR'd together to produce the actual sensor output. These registers contain the x-axis data. 
+\begin{itemize}
+    \item OUT\_X\_L (Data Low Bytes) Address: 0x28 (0xA8 when reading both registers in same transaction)
+    \item OUT\_X\_H (Data High Bytes) Address: 0x29
+    \item These registers should be read together in the same transaction. When reading multiple bytes, the L3GD20 automatically advances to the next register if the highest bit was set in the first address. 
+\end{itemize} 
+
+\subsubsection{Y-Axis Data Registers (OUT\_Y\_L \& OUT\_Y\_H)}
+These registers contain the 16-bit y-axis data. 
+\begin{itemize}
+    \item OUT\_X\_L (Data Low Bytes) Address: 0x2A (0xAA when reading both registers in same transaction)
+    \item OUT\_X\_H (Data High Bytes) Address: 0x2B
+    \item These registers should be read together in the same transaction. When reading multiple bytes, the L3GD20 automatically advances to the next register if the highest bit was set in the first address. 
+\end{itemize}
+
+\subsubsection{Other Device Registers}
+This lab uses the most basic methods of collecting data from the sensor. The L3GD20 has many advanced features such multi-mode FIFO buffers, low and high-pass filters, interrupt triggers, and threshold compare. Because of these unused features, there are multiple control registers not mentioned in this manual. These features are disabled by default and their control registers should be left in their reset/default state.
+
+
+\subsection{Device Connections}
+Since the L3GD20 can operate using both I2C and SPI, the device pins serve multiple purposes depending on the selected mode. The Discovery board originally intended that the sensor be interfaced using SPI. This complicates the connections slightly, you will need to use a few jumper wires between pins on the Discovery board in order to use the sensor with I2C. 
+
+Because the I2C clock and data lines require external pull-up resistors, you will need to attach resistors within the range of 4.7 to 10 kOhm between these lines to the 3V source pin on the discovery board. While in the lab, your lab aide should have pull-up cables available for use with 10 kOhm resistors built-in.  
+
+Figure \ref{gyro_pins} is a portion of the L3GD20 pinout and signal description table. In order to correctly connect these signals to the STM32F072 it is necessary to trace them through the Discovery board manual. Because the actual use of I2C is expected to take a significant amount of time in this lab, the exercises will indicate what GIPO pins and their modes to use.  
+
+
+\begin{figure}[]
+    \centering\includegraphics[width=\textwidth]{gyro_pins}
+    \caption{Partial L3GD20 pinout and signal description table.}
+    \label{gyro_pins}
+\end{figure}
+
+%\begin{itemize}
+%    \item \textbf{SCL/SPC}
+%    \begin{itemize}
+%        \item This pin acts as the I2C (SCL) or SPI (SCK) clock signal.
+%        \item Connected to pin PB13 on the STM32F072
+%        \item This pin requires an external 10 kOhm pull-up resistor to the 3V pin on the Discovery board. 
+%    \end{itemize}
+%    \item \textbf{SDA/SDI/SDO}
+%    \begin{itemize}
+%        \item 
+%    \end{itemize}
+%\end{itemize}
+
+
+\section{Lab Assignment}
+Within this lab's exercises you will be using I2C to communicate between the STM32F072 and the L3GD20 digital gyroscope sensor. The first exercise involves reading a single register to familiarize you with the basic concepts of writing and reading over I2C. The second exercise initializes and reads measured data from the sensor to  implement a rotation indicator using the LEDs on the discovery board. 
+
+Communicating over I2C can be very tricky unless you are comfortable with the interface and peripheral. It is very likely that you will have trouble getting your code to work properly on the first attempt. Using a logic analyzer with the I2C decoder will be very helpful as you will be able to see the different conditions of the bus and whether the transaction is progressing successfully. 
+
+When using the logic analyzer, you will want to primarily observe the SDA and SCL signals. Place a falling-edge trigger on the line used for the SCL signal. The default state of the I2C lines is high, and the clock will drop when the peripheral first signals the start condition.  
+
+Because the operation of the I2C peripheral takes some care, the lab exercises will provide instructions on what pins to connect as well as the GPIO configuration. 
+
+\subsection{Reading the L3GD20 ``WHO\_AM\_I'' Register}
+\subsubsection{Connecting The Sensor Pins}
+Because the Discovery board is designed to use the SPI interface to connect to the sensor, some minor rewiring is necessary. Your lab aide should provide pull-up cables and jumper wires for in-lab use. Outside the scheduled lab sessions, you may need to provide your own jumpers and pull-up resistors. 
+
+The lab provided pull-up cables have three ends. One black/gray and two of a random matching color. The black/gray and colored ends are connected with 10 kOhm resistors. 
+
+\begin{enumerate}
+    \item Connect pull-up resistors to the I2C SCL and SDA pins. 
+    \begin{itemize}
+        \item Connect the black/gray end of the provided pull-up cable to the \textbf{3V} power pin on the upper-left corner of the Discovery board.
+        \item Connect one colored end to PB15 (L3GD20 SDA pin).
+        \item Connect the other colored end to PB13 (L3GD20 SCL pin).
+    \end{itemize}
+    \item Connect the STM32F072 SDA pin to the L3GD20 SDA pin.
+    \begin{itemize}
+        \item Use a jumper wire to connect PB11 to PB15.
+        \item It might be helpful to remember that the pins on the Discovery board can be connected from both sides of the board. 
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection{Setting the GPIO Modes}
+Aside from the SCL and SDA pins, the L3GD20 requires additional signals to set the interface mode and slave address. Pin PC0 is connected to the SPI/I2C mode select pin, and PB14 controls the slave address when in I2C mode. 
+
+\begin{enumerate}
+    \item Enable GPIOB and GPIOC in the RCC. 
+    \item Set PB11 to alternate function mode, open-drain output type, and select I2C2\_SDA as its alternate function.
+    \item Set PB13 to alternate function mode, open-drain output type, and select I2C2\_SCL as its alternate function.
+    \item Set PB14 to output mode, push-pull output type, and initialize/set the pin high.
+    \item Set PC0 to output mode, push-pull output type, and initialize/set the pin high.
+\end{enumerate}
+
+\begin{warning}
+    Ensure that PB11 and PB13 are set to \textbf{open-drain} output type. Otherwise, the I2C slave will not be able to respond during communication. Leave PB15 in input mode since it is connected to PB11 through a jumper wire. Modifying the mode of pin PB15 could cause a conflict if the two pins try to output different logic states. 
+\end{warning}
+
+\subsubsection{Initializing the I2C Peripheral}
+In this lab we will be using only the basic operation of the I2C peripheral. Because of this, most of the control bits can be left in their default state. You will only need to modify the few registers listed in the lab manual. 
+
+\begin{enumerate}
+    \item Enable the I2C2 peripheral in the RCC.
+    \begin{itemize}
+        \item The I2C2 peripheral is simpler and requires less configuration than I2C1.
+    \end{itemize}
+    \item Set the parameters in the TIMINGR register to use 100 kHz standard-mode I2C. 
+    \begin{itemize}
+        \item See section \ref{i2c_init} and figure \ref{timing} in this lab manual.
+        \item You will need to shift the parameter values into the proper bit-location and use bitwise operators to apply them to the register. 
+    \end{itemize}
+    \item Enable the I2C peripheral using the PE bit in the CR1 register. 
+\end{enumerate}
+
+\subsubsection{Reading the Register}
+Figure \ref{trans_flow} shows a complete flowchart indicating the steps and actions required to perform blocking reads and writes to an I2C device. However, in this exercise, each step will be listed as a complete walk-through of the process of performing a basic I2C transaction. 
+
+For debugging purposes you may want to set LED patterns or print USART messages as you advance through the different portions.
+
+\begin{enumerate}
+    \item Set the transaction parameters in the CR2 register. (See section \ref{i2c_comm})
+    \begin{itemize}
+        \item \textbf{Set the L3GD20 slave address = 0x6B}
+        \begin{itemize}
+            \item The slave address is documented in the I2C section of the sensor datasheet. It is modified by the state of the SDO pin.
+        \end{itemize}
+        \item Set the number of bytes to transmit = 1.
+        \item Set the RD\_WRN bit to indicate a \underline{\textit{write}} operation.
+        \item Set the START bit.
+    \end{itemize}
+    \item Wait until either of the TXIS (Transmit Register Empty/Ready) or NACKF (Slave Not-Acknowledge) flags are set.
+    \begin{itemize}
+        \item If the NACKF flag is set, the slave did not respond to the address frame. You may have a wiring or configuration error. 
+        \item Continue if the TXIS flag is set. 
+    \end{itemize}
+    \item Write the address of the ``WHO\_AM\_I'' register into the I2C transmit register. (TXDR)
+    \item Wait until the TC (Transfer Complete) flag is set.
+    \item Reload the CR2 register with the same parameters as before, but set the RD\_WRN bit to indicate a \underline{\textit{read}} operation.
+    \begin{itemize}
+        \item Don't forget to set the START bit again to perform a I2C restart condition.
+    \end{itemize}
+    \item Wait until either of the RXNE (Receive Register Not Empty) or NACKF (Slave Not-Acknowledge) flags are set.
+    \begin{itemize}
+        \item Continue if the RXNE flag is set. 
+    \end{itemize}
+    \item Check the contents of the RXDR register to see if it matches 0xD4. (expected value of the ``WHO\_AM\_I'' register) 
+    \item Wait until the TC (Transfer Complete) flag is set.
+    \item Set the STOP bit in the CR2 register to release the I2C bus.
+\end{enumerate}
+
+After successfully verifying that the ``WHO\_AM\_I'' register matches the expected value, include a logic analyzer screenshot of the I2C transaction in your postlab.
+ 
+\subsection{Using the L3GD20 to Implement a Rotation Indicator}
+Now that you have completed basic reading and writing to the sensor, it is time to enable and use the data it produces. Since this lab is teaching basic I2C and not how to control the L3GD20 gyro effectively, you aren't required to fully initialize the device to use the FIFO buffer and other features.
+
+In this section you will be repeatedly reading the sensor's data registers within the main \texttt{while} loop of your program. Because the sensor only produces data at a defined rate (95 Hz default) you will want to introduce some delay between reads.
+
+Unlike the STM32F0 internal peripherals, you typically won't perform read-modify-write operations on remote device registers. Instead, directly calculate the desired bit pattern and overwrite the entire register. If your device doesn't appear to be operating correctly regardless of correct I2C transactions, you may want to perform a verification read after writing to check if things were written to the values you intended. 
+
+\subsubsection{Initializing the Gyroscope}
+Because we are polling the sensor in its basic mode, the only initialization step is to enable the axises and bring the device out of power-down mode. This exercise doesn't provide step-by-step instructions on how to read and write to the required registers. You will want to refer to the flowcharts in figures \ref{trans_flow} and \ref{gyro_flow}.
+
+\begin{enumerate}
+    \item Enable the X and Y sensing axis in the CTRL\_REG1 register.
+    \item Set the sensor into ``normal or sleep mode'' using the PD bit in the CTRL\_REG1 register.
+    \item All other bits in the CTRL\_REG1 register should be set to 0. These place the device in the default low-speed mode.
+\end{enumerate} 
+
+All other control registers enable advanced features such as the FIFO, interrupt and filter systems. Unless you have the base system operating, don't attempt to enable and use these. 
+
+\subsubsection{Exercise Specifications}
+You will need to implement an application that fulfills the following requirements:
+\begin{enumerate}
+    \item Initialize the L3GD20 gyroscope sensor to read the X and Y axises.
+    \item Read and save the value of the X and Y axis data registers every 100 ms.
+    \begin{itemize}
+        \item You will need to assemble the 16-bit measured value from the two data registers for each axis. 
+    \end{itemize}
+    \item Use the four LEDs to indicate whether each measured axis is positive or negative. 
+    \begin{itemize}
+        \item Because of measurement noise and to prevent the lights from triggering due to small vibrations, set a minimum threshold before changing the active LED.
+        \item Design your application such that the LED nearest the direction of rotation lights up.
+        \begin{itemize}
+            \item For example: Light the orange LED when the board is rotated/tilted in the positive X-axis direction. Refer to figure \ref{gyro_axis} for axis orientation. 
+        \end{itemize} 
+    \end{itemize}
+\end{enumerate}
+
+\begin{warning}
+    Most I2C devices will automatically advance to the next register when you attempt to read multiple data bytes. The L3GD20 also contains this feature, but it \underline{must be explicitly requested} when writing the starting register address. 
+    
+    In order to read multiple bytes, it is necessary to set the most significant bit of the starting register address. Otherwise the device will repeatedly send the same register data for each byte requested.
+\end{warning}
 
 \end{document}

@@ -1,0 +1,16 @@
+Analog Signals
+The Analog Truth Behind Digital Signals
+Simple Analog Waveforms
+
+Representing Analog Signals Digitally
+Quantization 
+Sampling Rate and Nyquist Theory
+
+The Analog to Digital Converter (ADC)
+
+The Digital to Analog Converter (DAC)
+
+
+Analog Functions of GPIO Pins
+
+

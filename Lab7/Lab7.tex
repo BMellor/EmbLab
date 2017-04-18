@@ -1,0 +1,333 @@
+
+
+\documentclass[11pt,fleqn]{book} % Default font size and left-justified equations
+
+\input{structure} % Insert the commands.tex file which contains the majority of the structure behind the template
+\usepackage{float}
+
+\usepackage{listings} 
+\lstset
+{ 
+    language=C,
+    basicstyle=\ttfamily,
+    columns=fullflexible,
+    keepspaces=true,
+    numbers=none,
+    stepnumber=1,
+    showstringspaces=false,
+    tabsize=1,
+    breaklines=true,
+    breakatwhitespace=false,
+    keywordstyle=\color{blue!80!black},
+    stringstyle=\color{red!80!black},
+    commentstyle=\color{green!40!black},
+    morecomment=[l][\color{magenta!80!black}]{\#}
+}
+
+\usepackage{caption}
+\captionsetup[figure]{font=small,skip=10pt}
+
+%\usepackage{enumitem}
+%\setlist{noitemsep} % or \setlist{noitemsep} to leave space around whole list
+
+
+%%%%% May be too harsh to prevent paragraph breaks across pages! 
+%\interlinepenalty 10000
+\widowpenalties 1 10000
+\raggedbottom
+
+
+\newcommand{\ilcode}[1]{
+    %\vspace{0.5pt}
+    \smallskip
+    \colorbox{gray!20!white}{
+        \centering
+        \parbox{\linewidth-2\fboxsep}{
+            \lstinline@#1@
+        }
+    }
+    %\vspace{0.5pt}
+}
+
+\newcommand{\code}[3]{
+    \begin{figure}[]
+        \colorbox{gray!20!white}{
+            \parbox{\linewidth-2\fboxsep} {
+                \centering 
+                \lstinputlisting[language=C]{#1}
+            }
+        }
+        \caption{#2}
+        \label{#3}
+    \end{figure}
+}
+
+\usepackage{textcomp}
+\usepackage{wrapfig}
+\usepackage{float}
+
+\usepackage{silence} % http://ctan.org/pkg/silence
+\ErrorFilter{textcomp}{Symbol \textrightarrow not provided}
+
+% Disable paragraph indentation globally since template was indenting some and not others. (looked terrible)
+%\setlength{\parindent}{0pt}
+%\usepackage[parfill]{parskip}
+
+%\usepackage{showframe}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%                                                                                         %%%%
+%%%%       Chapter 7:                                                                        %%%%
+%%%%                                                                                         %%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\setcounter{chapter}{6} % Manually adjust chapter counter to number before desired chapter heading
+
+\begin{document}
+	
+\chapterimage{chapter_head_2.png} % Chapter heading image
+\chapter{Modeling a PID Control System}
+
+\setSectionType{Intro}
+\section{Control System Basics}
+The purpose of a control system is to direct the behavior of other devices to produce an output state that matches a requested condition. Control systems vary widely in their design and are used in many different applications such as a thermostat for household heating and cruise-control for vehicles.
+
+Control systems can be either \textit{open-loop} or \textit{closed-loop} in design. Open-loop systems apply a process or algorithm to directly generate their output state from their inputs; they have no method of measuring the actual effect of their actions. Closed-loop control systems use their own output as a secondary input, and calculate a course of action depending on the error between the desired and current state. This process is called \textit{feedback}.
+
+Figure \ref{control_block} demonstrates the four basic parts of a closed-loop control system. 
+
+\begin{figure}[tb]
+    \centering\includegraphics[width=.8\textwidth]{control_block}
+    %\parbox{.75\textwidth}{\caption{Basic closed-loop control system. The output from the control block is fed into the physical ``plant'' and the generated output is compared against the target input.}}
+    \caption{Basic closed-loop control system.}
+    \label{control_block}
+\end{figure}
+
+\begin{description}
+    \item [Input/Setpoint:] The input to a control system represents some parameter of the desired output. This \textit{setpoint} is compared against the current output state. 
+    \item [Plant/Process:] The \textit{plant} of a system represents the external device under the command of the control system. The plant generates the observable output.
+    \item [Feedback:] In a closed-loop system the output is compared against the input and the system's error is calculated. This error is often either the combination of the output and input (positive feedback) or the difference between them (negative feedback).
+    \item [Control:] The control system adjusts its output (input to the plant) in order to minimize the system error. 
+\end{description}
+
+\subsection{PID Control Systems}
+The acronym PID represents the three mathematical relations used within the control system; and stand for proportional, integral, and derivative. PID controllers are commonly used in industrial systems because they offer rapid error correction, good stability and can be tuned to react properly to the unique characteristics of a specific system.
+
+The overall equation of a PID control system can be modeled by the following equation, where $c(t)$ represents the output control, and $e(t)$ the input error. 
+
+    \begin{equation*}
+    c(t) = K_{p}e(t) + K_{i}\int_{0}^{t}e(\tau)d\tau + K_{d}\frac{de(t)}{dt}
+    \end{equation*} 
+
+The outputs of each portion (proportional, integral, derivative) are combined to form the control signal fed to the system plant. The PID controller is tuned by adjusting scaling coefficients for each of these. Each of the three portions can be used in isolation to make simpler control systems. The following sections describe the effect each of the mathematical relationships has on the control signal depending on the input error. 
+
+%A PID controller continuously calculates the system error from the input setpoint and feedback from the plant/process output. The controller generates a correction signal by combining values  
+%Brief history and definition of PID control 
+
+\begin{figure}[tb]
+    \centering\includegraphics[width=.8\textwidth]{pid_block}
+    \caption{PID Control System Block Diagram.}
+    \label{pid_block}
+\end{figure}
+
+\subsubsection{Proportional}
+The proportional control factor represents the following relationship between the output control signal and the input error:
+\begin{equation*}
+ c(t) = K_{p}e(t) 
+\end{equation*} 
+
+The constant $K_{p}$ is the proportional scaling coefficient and determines the strength of the action taken to correct the error signal. Proportional feedback applies an output signal proportional to the error, essentially scaling the error by $K_{p}$.
+Proportional control provides rapid correction when the error signal is large, but loses effectiveness as the plant output nears the setpoint. Additionally, proportional control has the limitation that can not not adjust if the error persists through the initial action. 
+
+\subsubsection{Integral}
+Integral control grows proportionally to the integral of the error signal, and represents the following portion of the PID equation:
+
+\begin{equation*}
+c(t) = K_{i}\int_{0}^{t}e(\tau)d\tau
+\end{equation*} 
+
+Integral control begins with a small value regardless of the error's magnitude, but increases with the duration of the error. This means that even small errors will eventually build into large correction factors. This offers an advantage over proportional control as an integral based system will continually adjust until the error is corrected. The growth of the accumulated error is scaled by the integral scaling coefficient $ K_{i}$.
+
+Because these systems are based on the integral of the error signal, they have the disadvantages of beginning slowly, and overshooting the target setpoint. This overshoot is caused by the need for an equal amount of negative error to be accumulated to return the integral's value back to zero. This phenomenon is called ``wind-up'' and is managed in most systems by setting a maximum value that the integral is allowed to accumulate. 
+
+\subsubsection{Derivative}
+The final portion of the PID controller is derivative control, representing the last portion of the system equation:
+
+\begin{equation*}
+c(t) = K_{d}\frac{de(t)}{dt}
+\end{equation*} 
+
+A derivative controller reacts to the rate of change in the output of the system. Typically derivative effects are used to minimize overshoot oscillations caused by integral control. However, they also respond rapidly to unexpected changes in the output of the system. The reactive strength of a derivative controller depends on it's scaling factor $K_{d}$.
+
+The major drawback for derivative controlled systems is that they can amplify minor errors or oscillate in systems with natural fluctuations. Derivative systems are more difficult to tune properly, and depending on the process many systems use only proportional and integral control. 
+
+\setSectionType{Review}
+\section{Modeling DC Motors}
+
+DC motors when operating steady-state appear mostly as a series resistive-inductive loop with a voltage drop dependent on the current angular velocity. This voltage drop is due to the back-electromotive force or EMF which is generated from the motion of the motor armature relative to the windings. Figure \ref{motor_sys} shows a model of a simple DC motor system. 
+
+\subsection{Equations Modeling a Motor System}
+
+There are a number of basic equations that model aspects of a motor system. In this lab we will be primarily concerned with only first-order effects, many of the complex parameters are either simplified or removed. 
+
+\begin{figure}[tb]
+    \centering\includegraphics[width=.75\textwidth]{motor}
+    \caption{Variables and constants in a motor system.}
+    \label{motor_sys}
+\end{figure}
+
+The following equations use the following terminology:
+\begin{itemize}
+    \item $V$ -- DC drive voltage
+    \item $R$ -- Motor winding resistance
+    \item $L$ -- Motor winding inductance 
+    \item $i$ -- Motor current 
+    \item $\theta$ -- Angular position
+    \item $\dot{\theta}$ -- Angular velocity (rotational speed)
+    \item $\ddot{\theta}$ -- Angular acceleration
+    \item $T$ -- Motor Torque
+    \item $f$ -- System friction
+    \item $K$ -- Torque constant
+    \item $e$ -- Electromotive force
+    \item $J$ -- Moment of inertia
+    \item $t$ -- Time, ($s$ is used once in Laplace domain) 
+\end{itemize}
+
+\subsubsection{Torque Equation}
+\begin{equation}
+T(t) = Ki(t) = J\frac{d\dot{\theta}}{dt}=J\ddot{\theta}(t) 
+\end{equation}
+
+\subsubsection{Electromotive Force}
+\begin{equation}
+e(t) = K\dot{\theta}(t)
+\end{equation}
+
+\subsubsection{Kirchhoff's Law}
+\begin{equation}
+v(t) = Ri(t) + e = Ri(t) + K\dot{\theta}(t) = \frac{RJ}{K}\ddot{\theta}(t)+K\dot{\theta}(t)
+\end{equation}
+
+\subsubsection{1st-Order Transfer Function}
+\begin{equation}
+\frac{\dot{\theta}(s)}{v(s)} = \frac{1}{\frac{RJ}{K}s+K}
+\end{equation}
+
+% Section about deriving a motor transfer function
+
+% Section about using Matlab/Simulink
+   % probably just describe what they are and link to the resources
+   
+\subsection{Deriving the Transfer Functions}
+When modeling any system the first step is to derive the characteristic transfer function. This equation represents the modeled system and supposedly responds in a mathematically accurate way when set with parameter values. Within this lab you are going to derive the transfer function of a theoretical DC motor and use simple integer values for many of its parameters. 
+
+The typical form of a transfer function of a DC motor is the angular velocity (output) divided by the input voltage $\frac{\dot{\theta}(s)}{v(s)}$. Using this function gives a reasonable estimate of motor velocity for a specific input voltage. However, as shown in the lab exercises, other coefficients such as friction will play a large role in the output of the system. 
+
+To derive the 1st-order transfer function, follow these steps. Your goal is to combine the torque and Kirchoff's equations together and then simplify using Laplace transformations. 
+\begin{enumerate}
+    \item Start with the mechanical torque equation. 
+    \item Solve for the motor current $i$ by rearranging the torque equation. 
+    \item Replace the torque $T$ term with its acceleration form in the rearranged current equation. (acceleration form listed above)  
+    \item Replace the current $i$ term in Kirchoff's law with the rearranged current equation.
+    \item Replace the electromotive force $e$ term in Kirchoff's law with its velocity and torque constant form. 
+    \item Perform a Laplace transform of the modified equation, using an identity to convert the acceleration term into velocity. 
+    \item Isolate the velocity term on the left-hand side with the voltage as the denominator
+\end{enumerate}
+
+
+
+
+\setSectionType{Exercise}
+\section{Lab Assignment: Derivation of a DC Motor Transfer Function}
+The following portions of the exercise create the ``plant'' or motor model used in the simulated control system. You will use your derived transfer functions within the Simulink model created in the second exercise. 
+\begin{enumerate}
+    \item Derive the first-order transfer function (velocity/voltage) of a DC motor without any friction and inductive effects. 
+    \begin{itemize}
+        \item You may wish to review class lecture 16 slides, the transfer function is shown there as well as this manual. You will need to show derivation work for credit! 
+        \item You will need to use Laplace transformations to solve your first-order transfer function. 
+        \item Your final equation should have the form: $\frac{\dot{\theta}(s)}{v(s)} = \,?$
+    \end{itemize}
+    \item Assuming the simple case where the torque constant \textit{K}, the moment of inertia \textit{J}, and the electrical resistance \textit{R}, all have a numerical value of 1, simulate the response of the function to a step of amplitude 1 using Matlab.
+    \begin{itemize}
+        \item The step function represents suddenly turning the motor on (providing voltage) when the motor was previously idle. 
+        \item You will need to create a vector containing values representing the step function and pass it through the derived transfer function.
+        \item The resulting output vector is the motor's velocity response.
+    \end{itemize}
+    \item Study and report the effects that changing the torque constant \textit{K}, moment of inertia \textit{J}, or electrical resistance \textit{R}, have on the motor's response to the step function.
+    \item Derive the transfer function of a DC motor with friction. Note that the effect of friction can be modeled as an opposed torque of value $f\dot{\theta}$ (with \textit{f} the friction constant).
+\end{enumerate}
+
+\section{Lab Assignment: Simulating the Motor in Simulink}
+Within this exercise you will convert your transfer function into a form that can be used within a Simulink model. You will use your model to experiment with changing the basic motor parameters under the influence of friction.
+%\ddot{\theta}
+
+\begin{enumerate}
+    \item In order to use your transfer function within Simulink, you will need to rewrite to represent only the velocity. 
+    \begin{itemize}
+        \item Your original transfer function was in the form $\frac{\dot{\theta}(s)}{v(s)} = \,?$, you will need to convert it into $\dot{\theta}(s) = \frac{1}{s}*\,?$
+        \item You will want to isolate the Laplace ``$s$'' term from the rest of the equation. This is because Simulink represents integration as a discrete ``$\frac{1}{s}$'' block. 
+    \end{itemize}
+    \item Create a Simulink subsystem model of the transfer function you derived. It should take the coefficients for the moment of inertia, friction, torque constant and voltage.
+    \begin{itemize}
+        \item See Figures \ref{subsystem} and \ref{subsystem_detail} for examples of what the interface and contents of the subsystem should resemble. (Figure \ref{subsystem_detail} doesn't represent an actual transfer function. \textbf{Don't try to use it!})
+        \item Assume that the motor resistance is 1 to simplify the system. ($R=1$)
+        \item The following tutorial on subsystems may be helpful:\\ \href{http://www.mathworks.com/help/simulink/ug/creating-subsystems.html}{http://www.mathworks.com/help/simulink/ug/creating-subsystems.html}
+     \end{itemize}
+    \item Simulate the system using a step function of amplitude 1 for the voltage; with values for the torque constant \textit{K}, and moment of inertia \textit{J} set to 1. 
+    \begin{itemize}
+        \item Simulate the model using different values for the friction parameter.
+        \item The results should be similar to the second portion of the first exercise when the friction factor is zero. What happens if when the friction factor increases?
+    \end{itemize}
+    \item Perform a simulation with a step function controlling the friction parameter. (so it changes in the middle of the simulation) What happens, and why would friction dynamically change in a physical system? 
+\end{enumerate}
+
+\section{Lab Assignment: Designing a PI Controller in Simulink}
+This exercise simulates portions of a PI (proportional \& integral) control system within the Simulink modeling framework. After completing this portion, you should understand the basic operation and be able to tune the modeled system for reasonable performance. 
+
+\begin{enumerate}
+    \item Implement a feedback control using only the proportional term. 
+    \begin{itemize}
+        \item Add a saturation block/module on the output of the control system. Set this limiter to allow a maximum value of 6. This approximates reasonable limitations of your drive hardware which can't increase the output voltage past what is supplied.  
+        \item Study and comment the response of the system.
+    \end{itemize}
+    \item Improve the feedback control loop by adding an integral term. 
+    \begin{itemize}
+        \item Study and comment on the response of the system.
+        \item You may need to scale the integral and proportional terms to prevent the system from oscillating.
+    \end{itemize}
+    
+    
+\end{enumerate}
+
+
+
+
+\begin{figure}[tb]
+    \centering\includegraphics[width=.5\textwidth]{subsystem}
+    \caption{Example motor transfer function subsystem interface.}
+    \label{subsystem}
+\end{figure}
+
+
+%% Full-width figure
+\begin{figure}[b]
+    \begin{center}
+        \hspace*{-3.4cm}
+        \includegraphics[width=0.8\paperwidth]{subsystem_detail}
+        \caption{Example motor transfer function subsystem contents.}
+        \label{subsystem_detail}
+    \end{center}
+\end{figure}
+
+
+\end{document}
+
+%% Full-width figure
+%\begin{figure}[]
+%    \begin{center}
+%        \hspace*{-3.4cm}
+%        \includegraphics[width=0.8\paperwidth]{placeholder}
+%        \caption{Fundamental wave shapes.}
+%        \label{waves}
+%    \end{center}
+%\end{figure}

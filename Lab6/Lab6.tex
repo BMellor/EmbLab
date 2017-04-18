@@ -335,14 +335,20 @@ The goal of this exercise is to use the ADC to measure the position of a potenti
     \item Initialize the LED pins to output.
     \item Select a GPIO pin to use as the ADC input.
     \begin{itemize}
-        \item Remember that the ``ADC\_INx'' additional/analog function indicates which ADC input channel the pin connects to. 
+        \item Check 
+        \item Remember that the ``ADC\_INx'' additional/analog function indicates which ADC input channel the pin connects to.
         \item Configure the pin to analog mode, no pull-up/down resistors.
         \item Connect the output (center pin) of a potentiometer to the input pin. The other two pins of the potentiometer should be connected to 3V and GND.
     \end{itemize} 
+    
+    \begin{warning}
+        
+    \end{warning}
+
     \item Enable the ADC1 in the RCC peripheral. 
     \item Configure the ADC to 8-bit resolution, continuous conversion mode, hardware triggers disabled (software trigger only).
     \item Select/enable the input pin's channel for ADC conversion.
-    \item Perform a self-calibration and start the ADC.
+    \item Perform a self-calibration, enable, and start the ADC.
     \begin{itemize}
         \item The lab manual describes the basic procedure without mentioning the actual flags and conditions for advancement. 
         \item Use sections 13.4.1 (Calibration) and 13.4.2 (ADC on-off control) in the peripheral reference manual. 

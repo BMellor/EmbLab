@@ -1,0 +1,14 @@
+Modeling of a PID Control System
+
+Control System Basics
+	Plant
+	Calculating Error 
+	Control/Feedback 
+	
+PID Control Systems 
+	PID indicates the three types of control used
+		proportional 
+		integral 
+		derivative
+		
+	

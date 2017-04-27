@@ -73,7 +73,7 @@
 \ErrorFilter{textcomp}{Symbol \textrightarrow not provided}
 
 % Disable paragraph indentation globally since template was indenting some and not others. (looked terrible)
-\setlength{\parindent}{0pt}
+%\setlength{\parindent}{0pt}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -83,280 +83,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{document}
-	
 
 
 \chapterimage{chapter_head_2.png} % Chapter heading image
-
-\chapter{The STM32F072 Discovery and Toolchain}
-
-\section{Overview}
-This lab introduces the STM32F072 Discovery board from ST Microelectronics and guides through the creation of a simple application. The exercises in this lab form the basic starting point for all future activities. After completing this lab, you will understand the basic operation and structure of an MDK:ARM code project, and be able to use ST provided utilities to generate a pre-configured project template. 
-
-\section{The STM32F072 Discovery Board}\index{The STM32F072 Discovery Board}
-
-\begin{figure}[h]
-	\centering\includegraphics[width=\textwidth]{discovery_marked}
-	\caption{STM32F072 Discovery Board from ST Microelectronics}
-\end{figure}
-
-% PASSIVE VOICE
-One unique aspect of embedded systems programming is that the generated code is not typically run on the system used to develop the software itself. Instead, the compiled binary is loaded onto an external device for testing and debugging. Because of this, you'll be using a generic test board containing a processor and peripherals to target during development. 
-
-The STM32F072 Discovery board is a low-cost environment which provides all of the hardware you need to start developing basic projects. There are four main parts of the Discovery board: 
-
-\subsubsection*{STM32F072R8 ARM Cortex-M0 Processor ({\color{yellow!80!black}YELLOW})}
-The STM32F072R8 features an ARM Cortex-M0 RISC core that can operate up to 48 MHz clock frequency. It has 16 Kbytes of static RAM and 64 Kbytes of Flash memory for program and data storage. It operates on voltages between 2.0 and 3.6 V and is contained in a 64-pin low-quad-flat-pack (LQFP) package. Typically these labs will use STM32F0 as a shorter name for the STM32F072R8.
-
-The STM32F072R8 processor's name can be broken down into a couple of different parts. These parts identify the processor family, storage capabilities, and chip package the device has.
-
-\begin{itemize}
-	\item ``STM32F0'' -- Identifies the chip as a Cortex-M0 produced by ST Microelectronics
-	\item ``72'' -- Specifies the device as part of the STM32F0x2 sub-family. Each sub-family has minor differences in design and peripherals offered.
-	\item ``R8'' -- Indicates the FLASH (program storage) capacity and number of pins on the chip.  
-\end{itemize} 
-
-Figure \ref{f072_family} shows the entire STM32F0x2 (USB line) device sub-family. From this figure it is possible to see that there are multiple groupings of STM32F0 devices, each featuring different capabilities and containing a wide variety of parts.
-
-\begin{figure}[]
-	\centering\includegraphics[width=\textwidth]{stm32f0x2_family}
-	\caption{Entire STM32F0x2 device sub-family}
-	\label{f072_family}
-\end{figure}
-
-\subsubsection*{ST-Link Chip Programmer and Debugger ({\color{red!90!black}RED})}
-Unlike developing on many traditional systems, the STM32F0 can not communicate directly with the machine compiling the code. There are multiple methods of transferring a compiled binary to the STM32F0 (some of which can communicate directly), but the most robust method is to use a hardware debugger.
-
-Typically many device manufacturers prefer to develop their own debugging hardware. ST Microelectronics self-developed and preferred system is known as the ST-Link. The ST-Link is itself just another ARM processor, programmed to connect via USB to the host machine. On the host machine, a number of programs can connect to the ST-Link and download a binary to the target device. The protocol spoken between the ST-Link and the STM32F0 is known as serial wire debug (SWD).  We will discuss the details of this protocol in later chapters.
-
-\subsubsection*{Processor Breakout Pins ({\color{blue!90!black}BLUE})}	
-
-% SPLIT INFINITIVE, PASSIVE
-The Discovery board ``breaks-out'' or exposes all of the STM32F0 processor pins on the two side connectors. These make it possible to easily build and connect additional circuits to the Discovery board. The STM32F0 can control most of the pins that are available. However, there are a few occupied with system functions, such as debugging, that should not be used for other purposes. 
-
-\subsubsection*{Experimental Hardware  ({\color{orange!90!black}ORANGE})}
-Although the STM32F072 Discovery development board is simple in comparison to other development platforms, it offers a few devices for experimentation.
-
-\begin{itemize}
-	\item Light emitting diodes (LEDs) in Green, Orange, Blue and Red
-	\item ``USER'' button for general purpose use
-	\item ``RESET'' button
-	\item Linear capacitive touch-sense bar
-	\item L3GD20 3-axis MEMS Gyroscope
-	\item User programmable mini-USB 2.0 port
-\end{itemize}
-	
-
-\section{ARM Development Toolchain}\index{ARM Development Toolchain}
-
-\begin{figure}[]
-	\centering\includegraphics[width=\textwidth]{mdk_toolchain}
-	\caption{MDK:ARM Toolchain}
-	\label{mdk_toolchain}
-\end{figure}
-
-A \textit{toolchain} is a collection of software and hardware tools that create a complete system for developing, loading, and debugging embedded applications. 
-
-% PASSIVE VOICE 
-Figure \ref{mdk_toolchain} shows the components of the Kiel MDK:ARM toolchain. These provide a foundation for software projects and generate compiled ARM binaries. 
-The toolchain can be broken into two major components, the MDK tools and supporting software packs.
-
-\subsection*{MDK Tools}
-These tools form the basis of the Kiel MDK:ARM system. The major portion that we will be using is the {\textmu}Vision IDE which targets ARM Cortex-M devices. Although not utilized in this course, the DS-MDK tools target combination processors with both application-class (Cortex-A) and embedded (Cortex-M) systems. Both IDE systems use the ARM C/C++ cross-compiler, which generates ARM/THUMB2 assembly language code.
-
-A cross-compiler describes a system which generates assembly languages foreign from the machine that it operates on. Although the MDK:ARM system is running on a conventional PC x86-x64 architecture, it generates ARM/THUMB2 codes compatible with the Cortex-M0 STM32F0 processor.
-
-\subsection*{Software Packs}
-Similar to many conventional programming environments, embedded systems rely on supporting software libraries. 
-
-\begin{description}
-	\item[Startup Libraries] -- The STM32F0 processor requires a small amount of chip-specific initialization code to prepare the memory system and load the user application.  
-	\item[Device HAL] -- The STM32F0 devices have a large number of peripherals for tasks such as timing and communication. ST Microelectronics provides files which define the bindings between these and the user application. The \textit{hardware abstraction library} (HAL), provides a C/C++ API for controlling these peripherals.
-	\item[CMSIS Libraries] -- The ARM Cortex-M0 core also contains a number of advanced features. These core-peripherals are universal across all devices based on the same ARM core. The \textit{cortex microcontroller software interface standard} (CMSIS), provides a library API for interfacing with these features. 
-	\item[Middleware] -- Middleware libraries provide support for higher-level functions such as file systems, USB, and graphics.
-\end{description}
-
-\section{Creating Your First Project}\index{Creating Your First Project}
-Although we will be using Kiel MDK ({\textmu}Vision) to develop the software for the exercises in this book, manually creating a project for an STM32F0 processor requires a significant amount of configuration. To bypass this, we will be using the STM32CubeMX utility to graphically configure the project parameters and generate a ready-to-use {\textmu}Vision project. 
-
-\subsection{Generating a Project in STM32CubeMX}
-\subsubsection*{Selecting the Correct Processor}
-\begin{wrapfigure}{L}{0.2\textwidth}
-	\centering\includegraphics[width=0.125\textwidth]{stmcube_logo}
-	\caption{STM32CubeMX Logo}
-\end{wrapfigure}
-
-Launch the \textbf{STM32CubeMX (STMCube)} utility either from the start menu entry or desktop icon. Once loaded, select the \textbf{New Project} link on the welcome page, or use \textbf{File Menu \textrightarrow New Project}.
-
-% REVISE
-The \textit{New Project} window should open, here you will select the particular STM32 device that STMCube will generate a project for. The processor in use on the STM32F072 Discovery board is the STM32F072R8. You can quickly narrow down the available selections by selecting the following criteria in the \textit{MCU Filters} section.
-\begin{itemize}
-	\item Select \textbf{STM32F0} in the \textit{Series} filter
-	\item Select \textbf{STM32F0x2} in the \textit{Lines} filter
-	\item Select \textbf{LQFP64} in the \textit{Package} filter
-\end{itemize}
-At this point, there should only be a few choices available, select \textbf{STM32F072R8Tx} and press the \textbf{OK} button. Figure \ref{cube_newProj} shows the new project window with the appropriate filters applied.
-
-\begin{figure}[h]
-	\centering\includegraphics[width=\textwidth]{cube_newProj}
-	\caption{STM32CubeMX new project window with filters applied}
-	\label{cube_newProj}
-\end{figure}
-
-
-\subsubsection*{Changing Project Generation Settings}
-
-% PASSIVE VOICE
-After selecting the processor, you will be presented with the \textit{Pinout} screen of STMCube. (Figure \ref{cube_pinout}) This screen shows all of the available pins on the selected device and can enable and configure many of the internal peripherals within the STM32F0 processor. Although we won't be using any of the features here for this exercise, the pinout tool is very helpful for planning what pins can be used for peripheral outputs. Feel free to explore and enable peripherals on the left pane of the window but be sure to clear them all before moving on. We will be using the real capabilities of STMCube in later labs.
-
-\begin{figure}[h!]
-	\centering\includegraphics[width=\textwidth]{cube_pinout}
-	\caption{STM32CubeMX Pinout view}
-	\label{cube_pinout}
-\end{figure}
-
-Before we can tell STMCube to generate our template code project, we need to configure a few settings so that it creates the proper files and structure that {\textmu}Vision expects. To do this use \textbf{Project Menu \textrightarrow Settings}. 
-
-Within the settings dialog shown in Figure \ref{cube_settings} you will need to configure the following attributes:
-\begin{itemize}
-	\item Name the new project
-	\item Select a directory where STMCube can create subfolders to store project files.
-	\item Change the \textit{Toolchain/IDE} dropdown menu to \textbf{MDK-ARM V5}.
-\end{itemize}
-
-%Within the settings dialog you will want to name the new project and select the directory where STMCube can create a subfolder to store project files. 
-%The most important setting however is to change the Toolchain/IDE dropdown menu to "MDK-ARM V5." \\
-STMCube supports a broad range of toolchains and development environments. Unfortunately, many of these are completely incompatible with each other. The Toolchain/IDE menu selects between the supported output environments and ensures that the generated project will be compatible with the IDE you are using. 
-
-Once you are satisfied with your settings on the \textit{Project} tab, move to the \textit{Code Generator} tab at the top of the window. Although these settings are not necessarily important at the moment, you can reduce the code size of your project dramatically by selecting the \textbf{copy only the necessary library files} option in the \textit{STM32Cube Firmware Library Package} menu.
- 
-% PASSIVE VOICE
-When the necessary project configurations have been set, close the settings dialog with the \textbf{OK} button. 
-
-\begin{warning}
-	Don't forget to set the proper toolchain in the project settings! Otherwise, it will be impossible to use the generated project files with {\textmu}Vision.
-\end{warning}
-
-\begin{figure}[h!]
-	\centering\includegraphics[width=\textwidth]{cube_settings}
-	\caption{STM32CubeMX Project Settings}
-	\label{cube_settings}
-\end{figure}
-
-\subsubsection*{Generating the Project}
-Since we are not interested in configuring peripherals at the moment, generate the finished project using \textbf{Project Menu \textrightarrow Generate Code}. 
-
-%PASSIVE VOICE
-STMCube may take a while to copy the files to the directory specified in the settings. Afterward, you may be asked if you want to open the project folder or project file itself. You can select either of these options; we will be exploring both of them in the next section. %The next section discusses the basic directory structure of the generated Kiel MDK project. 
-
-%\subsection{Structure of the Toolchain Project}
-%Within the generated project folder there are a variety of files and subfolders. These contain {\textmu}Vision project files, startup code used to boot the STM32F0 as well as the ST Microelectronics hardware abstraction library (HAL). Within the main project directory you should find the following items:\\
-%
-%\begin{itemize}
-%	\item \textbf{Drivers:} This folder contains support files from ST Microelectronics such as startup code and the HAL.
-%	\item \textbf{Inc:} This folder contains user-developed headers, your \#include files will be placed here by {\textmu}Vision.
-%	\item \textbf{MDK-ARM:} This folder holds the {\textmu}Vision project files, build metadata and compiled objects.
-%	\item \textbf{Src:} This folder contains user-developed application code, .
-%	\item \textbf{.mxproject \& project.ioc:} These are the STM32CubeMX project files that can be used to regenerate the project using a different configuration if needed.
-%\end{itemize}
-
-
-\subsection{Exploring the Project in {\textmu}Vision}
-
-%\begin{figure}[h!]
-    \begin{wrapfigure}[8]{h!R}{0.2\textwidth}
-    \centering\includegraphics[width=0.125\textwidth]{uvision_logo}
-    \caption{Kiel {\textmu}Vision Logo}
-    \label{uvision_logo}
-    \end{wrapfigure}
-%\end{figure}
-
-Now that we have a project template that is ready to use, it is time to launch \textbf{Kiel {\textmu}Vision} from either the start menu or desktop icon and explore the development environment. 
-
-%PASSIVE VOICE
-Once {\textmu}Vision has loaded, open the newly generated project by selecting the ".uvprojx" file located under the MDK-ARM folder of the project directory. Alternatively, STMCube will also automatically launch {\textmu}Vision if the option to open the project was chosen after code generation. 
-
-The advantage of using STMCube to generate the project is that no further configuration within {\textmu}Vision is required to start developing software. 
-
-After the project has loaded, expand the folders within the \textit{Project} window (left-hand) of the main screen, you should see a folder hierarchy similar to Figure \ref{uvision_folders}.
-
-\subsubsection*{Application/MDK-ARM}
-% PASSIVE VOICE
-This folder contains assembly-language startup code that initializes the STM32F0 processor and starts the user application after reset.  These operations depend on the particular memory map for the processor and are unique to each STM32F0 sub-family. These files are provided by ST Microelectronics and customized for Kiel's toolchain. 
-
-\subsubsection*{Application/User}
-This folder contains all user-level application code. You can find the \textit{main.c} file here, as well as any, included header files. 
-
-If you open the physical project directory, you will find that {\textmu}Vision places c/cpp files within the \textit{Src} folder and h/hpp files within the \textit{Inc} folder. 
- 
-\begin{warning}
-    %PASSIVE VOICE
-	{\textmu}Vision chooses to list header files as sub-elements of the code that reference them. Because this project hasn't been compiled yet, you will be unable to see any of the included header files within the IDE.
-\end{warning}
-
-\begin{figure}[h!]
-%\begin{wrapfigure}{R}{0.5\textwidth}
-	\centering\includegraphics[width=.48\textwidth]{uvision_folders}
-	\caption{Kiel {\textmu}Vision Project Structure}
-	\label{uvision_folders}
-%\end{wrapfigure}
-\end{figure}
-
-\subsubsection*{Drivers/STM32F0xx\_HAL\_Driver}
-The STM32F0 devices are much more than a standalone processor core. Surrounding the ARM Cortex-M0 is a wide variety of peripheral circuits which connect the processor to the outside world. Similarly to the startup code, ST Microelectronics provides a hardware abstraction library. (HAL) These libraries allow the user to control system peripherals via a C-language API. %\\
-%While the HAL library may be convenient to use, it does not give the user an accurate depiction of what is involved with controlling device peripherals. Because of this, we will focus on developing applications directly against the hardware interface without the use of supporting libraries.
-
-\subsubsection*{Drivers/CMSIS}
-Similar to the ST hardware abstraction library, ARM publishes a software API for the internal features of the Cortex-M0 core. These functions known as the Cortex Microcontroller Software Interface Standard, (CMSIS) provide a universal interface to all ARM devices regardless of the specific chip manufacturer. 
-%This separation of processor core and device peripherals will be discussed in the next chapter. 
-
-\subsection{Compiling and Loading a Demo Program }
-\subsubsection{Auto-Generated Elements in Main.c}
-% REVISE
-Open the \textit{main.c} located within the Application/User folder. Within the template file, you will notice that in addition to the \texttt{main()} function there are a few others. These functions initialize the processor clock to the speed and source selected when STMCube generated the project. 
-
-Most embedded processors have flexible clock options that allow them to run from both internal or external clock signals and operate over a wide range of frequencies. The default processor speed that STMCube configures is usually 8 MHz. If you open the STMCube files in the project directory, you can select the Clock Configuration tab and view the clock settings.
-
-% PASSIVE VOICE
-Within the main function, you will notice some automatically generated comments marking boundaries of user/auto generated code. These are used by STMCube to locate and preserve the user's code if the project is regenerated with new settings. You may decide to keep or remove these comments, but it is recommended that you manually backup changes to the \textit{main.c} file when regenerating code in STMCube regardless. 
-
-\subsubsection{Blinky Example Code}
-Figure \ref{blinky1} contains a demo program that blinks the green and orange LEDs on the Discovery board. Copy and replace the \texttt{main()} function of the template project with the contents of the example. 
-
-%\colorbox{gray!20!white}{
-%	\centering
-%	\begin{minipage}{\linewidth}
-%		\lstinputlisting[language=C]{./Files/blinky.c}
-%	\end{minipage}
-%}
-%\vspace{1em}
-
-\code{./Files/blinky.c}{Example ``blinky'' program.}{blinky1}
-
-After replacing the main function with the ``blinky'' example, compile the project with \textbf{Project Menu \textrightarrow Build Target}. 
-
-Kiel {\textmu}Vision uses a custom build/dependency system similar to GNU-Make to check and compile all dependencies for each application file. You can see the output from the build system in the console at the bottom of the main window.
-
-If you generated the template project and copied the provided code correctly, you shouldn't have any errors in your completed result. Connect the STM32F072 Discovery board to the host computer using a mini-USB cable and the ST-Link USB port. 
-
-\begin{warning}
-	Remember that there are two ports available on the Discovery board. The center port is connected to the ST-Link debugger while the other is for user application use.
-\end{warning}
-
-After the Discovery board is connected, program the target STM32F0 through \textbf{Flash Menu \textrightarrow Download}. You will see a brief progress bar and status report in the {\textmu}Vision console, followed by a completion status message. 
-
-% PASSIVE VOICE
-After the loading process has completed, press and release the \textbf{RESET} button on the Discovery board. Assuming that no errors were reported in the console, you should see the orange and green lights begin to flash in an alternating pattern. \\
-
-Congratulations, you are running a custom application on the STM32F0! 
-
-
-
-
-%\section{Putting the Pieces Together}\index{Putting the Pieces Together}
-
-%The blinky example above uses the HAL library function calls to control the ``GPIO'' or general purpose input-output peripheral. Although it might seem straightforward, there are a number of code steps required to produce something that the STM32F0 can understand. 
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%                                                                                         %%%%
@@ -369,7 +98,7 @@ Congratulations, you are running a custom application on the STM32F0!
 \chapter{Memory-Mapped Peripherals and the GPIO}
 
 \section{Overview}
-This section provides an overview of embedded programs, memory-mapped peripherals, and device documentation. The exercises in this lab provide an introduction to memory-mapped register access by guiding the user through configuration of the ``GPIO'' or general purpose input-output peripheral. The GPIO is one of the fundamental peripherals available and provides access to the physical pins of the STM32F0 device. 
+This section provides an overview of embedded programs, memory-mapped peripherals, and device documentation. The exercises in this lab provide an introduction to memory-mapped register access by guiding the user through configuration of the \textit{GPIO} or general purpose input-output peripheral. The GPIO is one of the fundamental peripherals available and provides access to the physical pins of the STM32F0 device. 
 
 %\section{Explore the Processor Documentation}
 
@@ -377,14 +106,14 @@ This section provides an overview of embedded programs, memory-mapped peripheral
 
 
 The typical layout of an embedded program is very different from most standard programming systems. Figure \ref{programFlow} shows a comparison between devices running an operating system and the operation of many embedded applications. 
-In a computer with an operating system, there are layers of supervisory code which manage low-level system operations and provide frameworks for resource sharing between multiple applications. In these systems, a user application can exit, and the operating system will continue to operate and clean up afterward. In contrast, many embedded applications execute directly on the processor core, and no operating system exists to launch or clean up after applications exit. This style of development is called ``bare-metal'' programming. 
+Operating systems provide a layer of supervisory code which manages low-level system operations and provides frameworks for resource sharing applications. In these systems, once a user application exits, the operating system takes control and cleans up afterward. In contrast, many embedded applications execute directly on the processor core, with no operating system to launch or clean up after applications exit. This style of development is called ``bare-metal'' programming. 
 
-At the beginning of every STM32F0 binary executable, there is a jump to a small region of code called the \textit{Reset Vector}. This reset vector is always executed directly after a hardware reset and is responsible for ensuring that the stack, heap, and processor clock are initialized to basic settings, allowing more complex code to operate.
+Near the beginning of every STM32F0 binary executable, there is a jump to a small region of code called the \textit{Reset Vector}. This reset vector is always executed directly after a hardware reset and ensures that the stack, heap, and processor clock are initialized to basic settings, allowing more complex code to operate.
 
-Typically most of the initialization code is not within the reset vector itself but is scattered throughout the support files that ST Microelectronics and the MDK:ARM toolchain provide. The HAL library is typically used to perform less-critical initialization steps such as clock speed configuration at the beginning of the user's application. 
+Most of the initialization code is not within the reset vector itself but is scattered throughout the support files that ST Microelectronics and the MDK:ARM toolchain provide. The HAL library is typically used to perform less-critical initialization steps such as clock speed configuration at the beginning of the user's application. 
 
 % PASSIVE VOICE, REVISE
-After device initialization, the startup code calls the \texttt{main()} function within the user's application. Typically, embedded programs begin by configuring hardware peripherals they require and then enter into an infinite loop containing the majority of the application. This endless loop is always required since the main function of an embedded program should never return. Unlike a machine with an operating system, there is nothing to catch the processor's execution after the main program exits. This means that the behavior of the processor after returning is undefined and could range from resetting the device to executing random data.
+After initialization, the startup code calls the \texttt{main()} function within the user's application. Typically, embedded programs begin by configuring hardware peripherals they require and then enter into an infinite loop containing the majority of the application. This endless loop is required since the main function of an embedded program should never return. Unlike a machine with an operating system, there is nothing to catch the processor's execution after the main program exits. This means that the behavior of the processor after returning is undefined and could range from resetting the device to executing random data.
 
 \begin{figure}[]
     \centering\includegraphics[width=.75\textwidth]{programFlow}
@@ -395,11 +124,11 @@ After device initialization, the startup code calls the \texttt{main()} function
 
 \section{Controlling Device Peripherals}
 
-The last lab section introduced the ``blinky'' example program. (shown in Figure \ref{blinky}) This simple program repeatedly toggles pins on the STM32F0 using the GPIO hardware abstraction library drivers. This results in a pattern of alternating flashes as the pins used, connect to LEDs on the STM32F072 Discovery board. 
+Open the template code provided with this lab. (shown in Figure \ref{blinky}) This simple program repeatedly toggles pins on the STM32F0 using the GPIO hardware abstraction library drivers. This results in a pattern of alternating flashes as the pins used, connect to LEDs on the STM32F072 Discovery board. 
 %\code{./Files/blinky.c}
 \code{./Files/blinky.c}{Example ``blinky'' program.}{blinky}
 
-Taking a closer look at the program structure shows that it begins by initializing the HAL library and system clock. Afterward, it initializes the specific GPIO peripheral controlling the desired pins and enters an infinite \texttt{while} loop. Although many of the function calls in this example program are relatively straightforward to understand, an important question to consider is how the HAL library functions modify the physical peripherals of the STM32F0 device.
+This example program begins by initializing the HAL library and system clock. Then, it initializes the GPIO peripheral controlling the desired pins and enters an infinite \texttt{while} loop. Although many of the function calls in this example program are relatively straightforward to understand, it is important to consider how the HAL library functions modify the physical peripherals of the STM32F0 device.
 
 \subsection{Memory-Mapped Peripherals on the STM32F0}
 
@@ -409,14 +138,14 @@ Taking a closer look at the program structure shows that it begins by initializi
     \label{peripherals}
 \end{figure}
 
-Figure \ref{peripherals} contains the system block diagram for the STM32F0 family of processors. As shown, there are an enormous number of peripherals available, and the interconnections between them are complex. Luckily, the toolchain hides most of the complicated hardware-level implementation from the end user.
+The STM32F0 processors, as shown by the system block diagram in figure \ref{peripherals}, contain an large number of peripherals with complex interconnections. Luckily, the toolchain hides most of the complicated hardware-level implementation from the end user.
 
-However, how does the processor interact with the complex hardware surrounding it? There are many methods that an engineer can choose when designing a processor core. One of these is to develop the machine language interface so that it understands specific instructions telling it to manipulate the hardware in a certain way. This method seems straightforward but has the disadvantage of increasing the size and complexity of the instruction decoder hardware. Likewise, if the processor has a significant number of peripherals, the resulting instruction set becomes enormous. 
+However, how does the processor interact with the hardware surrounding it. There are multiple methods that an engineer can choose when designing a processor core. One of these is to develop the machine language interface so that the processor directly understands instructions to manipulate the surrounding hardware. This method seems straightforward but has the disadvantage of increasing the size and complexity of the instruction decoder hardware. Likewise, if the processor has a significant number of peripherals, the resulting instruction set becomes enormous. 
 
-ARM processors belong to the \textit{reduced-instruction-set-computing} (RISC) class of devices. Processors of this type have instruction sets that are relatively simple and typically perform a limited number of tasks. Usually, these tasks/instructions primarily involve arithmetic operations and moving data around the system's memory.
+Most embedded processors have instruction sets that are relatively simple and perform a limited number of tasks. Usually, these tasks/instructions primarily involve arithmetic operations and moving data around the system's memory.
 
 % PASSIVE VOICE
-Because of this limitation, one of the most common ways of controlling system hardware is to designate regions of memory as \textit{peripheral registers}. When an application writes to the memory address of one of these registers, the memory bus controller recognizes the address as belonging to a specific peripheral. It then routes the data to the appropriate control circuitry for that peripheral instead of system memory. Because these hardware registers are mapped into the system's memory address space, the processor simply considers them as conventional variables. 
+Because of this limitation, one common way of controlling system hardware is to designate regions of memory as \textit{peripheral registers}. When an application writes to the memory address of one of these registers, the memory bus controller recognizes the address as belonging to a specific peripheral. It then routes the data to the appropriate control circuitry for that peripheral instead of system memory. Because these hardware registers are mapped into the system's memory address space, the processor simply considers them as conventional variables. 
 
 Figure \ref{memoryTable} shows a simplified memory map for a STM32F0 processor. Although the STM32F0 devices have only a few kilobytes of combined physical memory, program storage, and mapped peripheral registers, they have a full 32-bit (4GB) address space. Because of this, huge blocks of unimplemented addresses separate each functional region of the address space (program storage, physical memory, and peripheral registers). These gaps in the address space ensure that each type of memory has a unique-bit-pattern and provides for future expansion when developing new chips. 
 
@@ -434,7 +163,7 @@ One unique feature of all ARM chips is that the processor core is developed sepa
 %PASSIVE VOICE
 Since the processor core is developed separately, it contains its own set of peripherals. These peripherals have a much closer relationship to the operation of the processor and involve actions that directly manipulate the flow of instruction execution. Examples of these include hardware interrupts and program debugging. Because core peripherals are physically separate from the others within the device, they are memory mapped within a separate region. However, the biggest difference to system programmers is that these peripherals are documented separately from the others.
 
-\section{Searching Datasheets and Manuals for Peripheral Details}
+\subsection{Device Datasheets and Manuals}
 
 Efficiently searching datasheets and manuals is one of the most important skills that an embedded engineer can develop. This trait is important because the sheer amount of information required to understand the operation of many embedded devices completely is staggering. 
 Engineers who can rapidly search for information within device documentation do not need to memorize operation details. Likewise, it becomes easier to work with an unknown device. 
@@ -468,8 +197,9 @@ Four files provide the documentation for the exercises in these labs. You can do
     These manuals are large! Do not expect to read them fully; there is simply too much information presented. For example, the peripheral reference manual contains over 1000 pages of detailed descriptions about each peripherals operation and configuration.
 \end{warning}
 
-\subsection{An Example: The General Purpose Input-Output Peripheral (GPIO)}
+\section{Using Peripheral Control Registers}
 
+\subsection{The General Purpose Input-Output Peripheral (GPIO)}
 
 The GPIO is one of the most fundamental peripherals within the STM32F0. Although it is one of the simplest peripherals, it is still surprisingly complex and very powerful.
 
@@ -592,29 +322,17 @@ We will be using alternate functions in the next lab to connect GPIO pins to tim
 \subsubsection{GPIO port bit reset register (GPIOx\_BRR)}
 This last control register in the GPIO peripheral is very similar to the bit set/reset register. Although you can clear bits using the bit set/reset register, all of the clearing bits are in the upper half of the register. This reset-only register is essentially a copy but has the clearing bits in the lower half. If you look at the mapping between bits in this and the bit set/reset register and their effect on the output register you might see why some people wanted the clear bits also in the low positions.
 
-\subsection{Finding What Peripherals are Available in a Device}
-
-Sometimes the peripheral reference manual can be misleading because it documents all peripherals that can appear on any of the STM32F0 devices. However, depending on which member of the STM32F0 family you have it's unlikely that every documented peripheral is available.
-
-You can discover what peripherals each specific device features by examining the first few pages of the chip datasheet. These pages contain a summarization of available peripherals. However, they don't usually give important details about the features and limitations these may have. 
-
-% PASSIVE
-Within the \textit{Functional Overview} (Section 3) of the datasheet, you will find more details about the peripherals that are included within the specific chip. 
-
-\begin{example}[System Timers and their Features]
-    % PASSIVE
-    Examine the first page of the STM32F072RB datasheet. Within the section discussing the \textit{timer} peripherals, notice that while the basic type of the timers (16 or 32-bit) are listed, no real details of their capabilities are given. 
-    
-    Afterward, turn to page 21 of the STM32F072RB datasheet. Here the functional overview contains the table shown in figure \ref{timers}. This table lists the individual characteristics and names of the available hardware timers.
-\end{example}
-
-
-%STM32F072RB
-\begin{figure}[]
-    \centering\includegraphics[width=\textwidth]{timers}
-    \caption{STM32F072RB hardware timer details}
-    \label{timers}
-\end{figure}
+\newpage
+\begin{exercise}[Finding Configuration Bits]
+    \label{ex1}
+    Using the peripheral reference manual, list the bit numbers and whether each bit should be set or cleared in the following GPIO registers to configure the pins \textit{PC8} and \textit{PC9} to the following state:
+    \begin{itemize}
+        \item \textbf{GPIOx\_MODER} -- General purpose output mode
+        \item \textbf{GPIOx\_OTYPER} -- Output push-pull
+        \item \textbf{GPIOx\_OSPEEDR} -- Low speed 
+        \item \textbf{GPIOx\_PUPDR} -- No pull-up, pull-down 
+    \end{itemize}
+\end{exercise}
 
 \subsection{Finding Register Definitions in ST's Header Files}
 
@@ -667,11 +385,16 @@ Searching on the name of the GPIO structure likely took you to line 785. Here we
 
 Returning again to the structure definition, (line 390) try searching on one of the register names it defines. If you searched on the MODER register, you will find that eclipse took you to line 6499 where a list of defines gives names to each of the bits in the register. For simple peripherals like the GPIO, we typically won't use the bit names since their purpose is fairly straightforward and all have similar functions (just on different pins). For more complex peripherals the bit names often tell you their function, we'll see an example of this later.
 
-
-\section{Starting to Write Embedded Programs}
-
-If you've made it this far, you're almost ready to start writing your own embedded applications. There's just a few thing you need to know before your code will work properly.
-
+\begin{exercise}[Accessing GPIO Registers]
+    \label{ex2}
+    Using the structures in the \textit{stm32f072xb.h} file, document how you would access the following registers for the \textit{GPIOC} peripheral in code.
+\begin{itemize}
+    \item GPIOx\_MODER
+    \item GPIOx\_OTYPER
+    \item GPIOx\_OSPEEDR
+    \item GPIOx\_PUPDR
+\end{itemize}
+\end{exercise}
 
 \subsection{Bitwise Operations on Peripheral Registers}
 
@@ -739,7 +462,39 @@ In the first code example below, the first constant represents a register value 
 \smallskip
 \end{example}
 
+\newpage
+\begin{exercise}[Initializing the GPIO pins]
+    \label{ex3}
+    Create a new {\textmu}Vision project and replace the \textit{main.c} file with the lab provided template code. This code uses the HAL library to flash the green and orange LEDs. 
+    
+    Your task is to make incremental changes from the HAL library calls to bitwise operations on peripheral registers. Using the bit numbers and registers from exercises \ref{ex1}-\ref{ex2}, initialize the GPIO pins to the indicated mode and parameters. 
+    \begin{itemize}
+        \item Remove the \texttt{GPIO\_InitTypeDef} struct and all \texttt{HAL\_GPIO\_Init()} function calls.
+        \item Make sure to reference the correct GPIO peripheral indicated by the pin name. 
+        \item The green and orange LED pins (PC8 \& PC9) should be configured to: output mode, push-pull type, low speed, and no pull-up/down resistors.
+    \end{itemize}
 
+    \noindent Compile and test your changes to the program. If initialized properly, the application should continue to operate as it did originally. 
+\end{exercise}
+
+\begin{exercise}[Controlling the GPIO pins] 
+    \label{ex4}
+     General purpose output pins are controlled by modifying the \textit{ODR}, \textit{BSRR}, and \textit{BRR} registers. Exchange the HAL library calls with bitwise operations and register access.
+    \begin{itemize}
+        \item Set one pin logic high and the other to low before entering the endless loop.
+        \begin{itemize}
+            \item Remove the \texttt{HAL\_GPIO\_WritePin()} function call.
+            \item Use either the \textit{ODR} or \textit{BSRR} register.  
+        \end{itemize}
+        \item Toggle both pin output states within the endless loop.
+        \begin{itemize}
+            \item Remove the \texttt{HAL\_GPIO\_TogglePin()} function call.
+            \item Use either the \textit{ODR} or \textit{BSRR} register. 
+        \end{itemize}
+    \end{itemize}
+
+    \noindent Leave the HAL delay function within the loop. Otherwise, the LEDs will toggle too rapidly to see. Feel free to change the duration to reasonable values.
+\end{exercise}
 \subsection{Enabling the System Clock to Device Peripherals}
 
 Just as each GPIO pin has multiple speed settings to conserve power, by default most peripherals in the STM32F0 have their clock signals disabled. Since synchronous circuits don't operate without a clock signal, they are essentially "turned-off." In this state they consume significantly less power than they would sitting idle, but you can't read or write any of their registers.
@@ -767,6 +522,15 @@ On the STM32F0, the GPIO peripherals are located on the AHB bus. However, in oth
     \smallskip
     %\texttt{RCC->AHBENR |= RCC\_AHBENR\_GPIOAEN;    // Enable peripheral clock to GPIOC}
 \end{example}
+
+\begin{exercise}[Enabling the GPIO Peripheral Clock] Before any peripheral can be used, its system clock must enabled. The code enabling the clock to a peripheral must be located before any of the peripherals registers are accessed. 
+    \label{ex5}
+    \begin{itemize}
+        \item Remove the \texttt{\_\_HAL\_RCC\_GPIOC\_CLK\_ENABLE()} HAL library macro.
+        \item Use the stm32f072xb.h header file to determine the register that enables the GPIOC peripheral clock.
+        \item Set the appropriate bit using bitwise operations and either a bitmask or defined bit name. 
+    \end{itemize}
+\end{exercise}
 
 \subsection{Slowing the System Down}
 Even though the STM32F072 operates at a far slower clock rate than a conventional computer, it executes instructions fast enough that a simple pin toggling loop will flash the LED's faster than the human eye can see. Because of this, we'll have to introduce our own methods of adding delay into the program..
@@ -812,37 +576,9 @@ As seen in the ``blinky'' example, the infinite loop calls the \texttt{HAL\_Dela
 %\smallskip
 
 % PASSIVE
-Although these labs will typically avoid using the HAL library resources, it is encouraged that user applications make use of the HAL delay functions. One of the exercises in the next lab on interrupts will explore writing a similar delay function using the SysTick peripheral. However, since the HAL delay system is automatically initialized during the clock speed configuration, it is easier to use the preexisting functionality for most purposes. 
+\noindent Although these labs avoid using the HAL library resources, it is encouraged that you use the HAL delay function. The SysTick timer is automatically initialized during clock speed configuration and makes it easier to use the preexisting delay functionality. 
 
-\subsection{Standard Integer Types}
 
-% REVISE
-While most of the C-standard variable types work properly on embedded systems, there is always the possibility that they are not the size (number of bits) usually expected. For example, similar to many systems an ``int'' on the STM32F0 is 32-bits wide. However, on 8-bit processors, an integer type is typically 8 or 16 bits. To avoid confusion and very subtle bugs, most toolchains define explicit numeric types. Figure \ref{types} shows the integer types defined and used within ST's provided files.
-
-\code{./files/types.h}{Integer variable types defined in ST Microelectronics support files.}{types}
-%\code{./files/types.h}
-\begin{warning}
-    Avoid floating-point types when possible! Many embedded devices do not have hardware support for floating-point mathematics and must emulate it with large and slow code libraries. Higher-end devices such as the STM32F4 family of chips have a hardware floating-point unit. (FPU) 
-\end{warning}
-
-\subsection{``Debouncing'' External Signals} \label{bounce_section}
-
-\begin{figure}[]
-    \centering\includegraphics[width=\textwidth]{bounce}
-    \caption{Signal bounce on button press.}
-    \label{bounce}
-\end{figure}
-
-% PASSIVE, REVISE
-One complication when working with physical devices such as buttons is often their transitions are not cleanly defined. Most mechanical buttons and switches ``bounce'' when they are pressed, unfortunately, most processors are fast enough to be able to see these bounces as multiple presses! Figure \ref{bounce} shows an oscilloscope trace captured from one of the Discovery board's buttons.
-
-% PASSIVE
-There are multiple ways of dealing with bouncing signals. The Discovery board has circuit footprints available for creating a hardware low-pass filter. However, these pads are not populated with components, and it is necessary to deal with the bouncing signal in software.
-
-% REVISE
-One simple way to debounce an input signal is to use a shifted bit-vector. A shifted bit vector is an unsigned integer variable which has its lowest bit (rightmost) set to the state of the input signal every iteration through the program loop. As time passes (or each loop iteration) the variable is shifted by one bit to the left. This results in the variable's value representing the input pin's state throughout the bouncing interval. We can reject the bouncing by triggering the code only on steady state values of the variable. (For example: 0xFFFF or 0x0000) Figure \ref{debounce} shows an example debounce routine using a shifted bit-vector.
-
-\code{./files/debounce.c}{Debouncing method using shifted bit-vector}{debounce}
 
 %\section{Hello World: Writing Basic I/O Code}
 %\section{Section Activity: Writing Basic I/O Code}
@@ -859,91 +595,74 @@ There are multiple ways to approach these exercises. Many lab assignments begin 
 % REVISE
 The benefit of converting a working example is that it becomes possible to compile and test the application after replacing each line of code. This breaks down the possible sources of error into manageable portions. 
 
-\subsection{Configuring a GPIO Pin to Output and Blink an LED}
-
-Your goal in this lab assignment is to recreate the blinking demo using the red and blue LEDs on the Discovery board. 
-
-If beginning with the example ``blinky'' application, the assignment can be broken down into the following steps:
-
-\subsubsection{Converting the HAL Library Calls to Register Access}
-\begin{enumerate}
+\begin{exercise}[Configuring a GPIO Pin to Output and Blink an LED]
+    Complete exercises \ref{ex1} though \ref{ex5} and demonstrate to your TA that the application operates using only register access. 
     
-    \item Use the RCC to enable the GPIOC peripheral clock.
-    \begin{itemize}
-        \item Remove the \texttt{\_\_HAL\_RCC\_GPIOC\_CLK\_ENABLE()} HAL library macro.
-        \item Use the stm32f072xb.h header file to determine the register that enables the GPIOC peripheral clock.
-        \item Set the appropriate bit using bitwise operations and either a bitmask or defined bit name. 
-    \end{itemize}
-    \item Configure the LED pins to slow-speed, push-pull output mode without pull-up/down resistors.
-    \begin{itemize}
-        \item Remove the \texttt{GPIO\_InitTypeDef} struct and \texttt{HAL\_GPIO\_Init()} function call.
-        \item The green and orange LEDs are on pins PC8 and PC9.
-        \item Set the pins to general-purpose output mode in the MODER register. 
-        \item Set the pins to push-pull output type in the OTYPER register.
-        \item Set the pins to low speed in the OSPEEDR register. 
-        \item Set to no pull-up/down resistors in the PUPDR register. 
-    \end{itemize}
+    
+    
+\end{exercise}
 
-    Each register map in the peripheral reference manual documents the starting state of bits in the register. Although clearing bits that should already be zero is not always necessary, it is good style to ensure that every bit is in a known state.  
-    \medskip
-
-    \item Initialize one pin logic high and the other to low.
-    \begin{itemize}
-        \item Remove the \texttt{HAL\_GPIO\_WritePin()} function call.
-        \item Use either the ODR or BSRR register.  
-    \end{itemize}
-    \item Toggle both pin output states within the endless loop.
-    \begin{itemize}
-        \item Remove the \texttt{HAL\_GPIO\_TogglePin()} function call.
-        \item Use either the ODR or BSRR register. 
-    \end{itemize}
-    \item Leave the HAL delay function within the loop. Otherwise, the LEDs will toggle too rapidly to see. Feel free to change the duration to reasonable values.
-\end{enumerate}
-
-
-\subsubsection{Changing to the New LEDs}
-
-\begin{enumerate}
-    \item Use the \textit{Hardware Layout} section of the Discovery board manual to find the pins connecting to the red and blue LEDs.  
-    \begin{itemize}
-        \item Page 13 of the Discovery board manual lists the STM32F0 pins used for LEDs.
-        \item The red LED is labeled as \textit{LD5} and the blue as \textit{LD6} on the Discovery board.
-        \item All LED pins are in the GPIOC peripheral. 
-    \end{itemize}
-    \item Update the pin initialization and toggle code to use the new pins.
-\end{enumerate}
+%Your goal in this lab assignment is to recreate the blinking demo using the red and blue LEDs on the Discovery board. 
+%
+%If beginning with the example ``blinky'' application, the assignment can be broken down into the following steps:
+%
+%\subsubsection{Converting the HAL Library Calls to Register Access}
+%\begin{enumerate}
+%    
+%    \item Use the RCC to enable the GPIOC peripheral clock.
+%    \begin{itemize}
+%        \item Remove the \texttt{\_\_HAL\_RCC\_GPIOC\_CLK\_ENABLE()} HAL library macro.
+%        \item Use the stm32f072xb.h header file to determine the register that enables the GPIOC peripheral clock.
+%        \item Set the appropriate bit using bitwise operations and either a bitmask or defined bit name. 
+%    \end{itemize}
+%    \item Configure the LED pins to slow-speed, push-pull output mode without pull-up/down resistors.
+%    \begin{itemize}
+%        \item Remove the \texttt{GPIO\_InitTypeDef} struct and \texttt{HAL\_GPIO\_Init()} function call.
+%        \item The green and orange LEDs are on pins PC8 and PC9.
+%        \item Set the pins to general-purpose output mode in the MODER register. 
+%        \item Set the pins to push-pull output type in the OTYPER register.
+%        \item Set the pins to low speed in the OSPEEDR register. 
+%        \item Set to no pull-up/down resistors in the PUPDR register. 
+%    \end{itemize}
+%
+%    Each register map in the peripheral reference manual documents the starting state of bits in the register. Although clearing bits that should already be zero is not always necessary, it is good style to ensure that every bit is in a known state.  
+%    \medskip
+%
+%    \item Initialize one pin logic high and the other to low.
+%    \begin{itemize}
+%        \item Remove the \texttt{HAL\_GPIO\_WritePin()} function call.
+%        \item Use either the ODR or BSRR register.  
+%    \end{itemize}
+%    \item Toggle both pin output states within the endless loop.
+%    \begin{itemize}
+%        \item Remove the \texttt{HAL\_GPIO\_TogglePin()} function call.
+%        \item Use either the ODR or BSRR register. 
+%    \end{itemize}
+%    \item Leave the HAL delay function within the loop. Otherwise, the LEDs will toggle too rapidly to see. Feel free to change the duration to reasonable values.
+%\end{enumerate}
 
 
-\subsection{Configuring a GPIO Pin to Input and Reading a Button}
-
-Your goal in this portion of the lab assignment is to change your version of the flashing LED program, such that the LEDs toggle on a button press instead of a set delay. This can be broken down into the following steps:
+\begin{exercise}[Configuring a GPIO Pin to Input and Reading a Button]
+After demonstrating the previous exercise, change your version of the flashing LED program such that the LEDs toggle on a button press instead of a set delay. This can be broken down into the following steps:
 
 \begin{enumerate}
-    \item Use the \textit{Hardware Layout} section of the Discovery board manual to find the pin connected to the ``USER'' button.
-    \begin{itemize}
-        \item The user button is labeled as \textit{B1} on the Discovery board.
-        \item Search through and find the material on available buttons. 
-    \end{itemize}
+    \item The \textit{USER} button is connected to pin \textit{PA0} on the STM32F0.
     \item Use the RCC to enable the clock to the appropriate GPIO peripheral.
     \item Configure the button pin to input mode with the internal pull-down resistor enabled.
     \begin{itemize}
-        \item Set the pins to input mode in the MODER register. 
-        \item Set the pins to low speed in the OSPEEDR register. 
-        \item Enable the pull-down resistor in the PUPDR register. 
+        \item Set the pin to input mode in the \textit{MODER} register. 
+        \item Set the pin to low speed in the \textit{OSPEEDR} register. 
+        \item Enable the pull-down resistor in the \textit{PUPDR} register. 
     \end{itemize}
-    \item Monitor the button pin input state within the endless program loop.
+    \item Monitor the button pin input state using the IDR register within the endless program loop.
     \begin{itemize}
-        \item Use the IDR register.  
-    \end{itemize}
-    \item Toggle the LED pins when a button press is detected.
-    \item Include a software debounce routine to prevent multiple toggles on a single button press.
-    \begin{itemize}
-        \item See section \ref{bounce_section} for an example debounce routine. 
+        \item Toggle the LED pins when a button press is detected.
     \end{itemize}
 \end{enumerate}
 
 % PASSIVE
-After making these changes to the original application, there is no need for a long duration delay statement each loop iteration. However, some program delay is still required (few milliseconds) otherwise the button debouncing method shown in section \ref{bounce_section} will not operate properly. 
+\noindent Because the application will be waiting for the button press before toggling the LEDs, there is no longer any need for the delay statement each loop iteration. Demonstrate the working adaption to your TA. 
+\end{exercise}
 
 \begin{warning}
     Some GPIO peripherals contain pins with system critical functions. For example, GPIOA contains pins PA13 (SWDIO) \& PA14 (SWCLK) which are used by the debugging hardware to communicate with the STM32F0. 

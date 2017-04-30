@@ -39,6 +39,14 @@
 %\definecolor{rust}{RGB}{243,102,25} % Define the orange color used for highlighting throughout the book
 \definecolor{rust}{RGB}{153, 0, 0} % Define alternate red color
 
+\usepackage{varioref}
+\addto\extrasenglish{% page 5 of varioref's manual
+    \renewcommand\reftextfaceafter{on the following page}%
+    \renewcommand\reftextafter {on the next page}%
+    \renewcommand\reftextfacebefore{on the previous page}%
+    \renewcommand\reftextbefore {on the previous page}%
+}
+
 %----------------------------------------------------------------------------------------
 %	FONTS
 %----------------------------------------------------------------------------------------
